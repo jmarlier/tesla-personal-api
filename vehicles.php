@@ -1,100 +1,141 @@
 <?php
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
-session_start();
 
-require __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// 🔐 Charger le token Fleet
-$tokenPath = __DIR__ . '/tokens.json';
-if (!file_exists($tokenPath)) {
-    exit('❌ Aucune authentification trouvée. Retourne au <a href="login.php">login</a>.');
+// Charger les tokens Fleet depuis le fichier
+$tokensFile = __DIR__ . '/tokens.json';
+if (!file_exists($tokensFile)) {
+    exit('<h2 style="color: red;">❌ Aucun token trouvé. Connecte-toi d’abord via login.php</h2>');
 }
 
-$tokens = json_decode(file_get_contents($tokenPath), true);
-$accessToken = $tokens['access_token'] ?? null;
+$fleetData = json_decode(file_get_contents($tokensFile), true);
+$accessToken = $fleetData['access_token'] ?? null;
+$fleetBaseUrl = $fleetData['fleet_api_base_url'] ?? '';
 
-if (!$accessToken) {
-    exit('❌ Token introuvable dans tokens.json.');
+// Vérifications
+if (!$accessToken || !$fleetBaseUrl) {
+    exit('<h2 style="color: red;">❌ Token ou URL manquant dans tokens.json</h2><pre>' . htmlspecialchars(json_encode($fleetData, JSON_PRETTY_PRINT)) . '</pre>');
 }
 
-// 🌐 URL complète saisie par l'utilisateur (ou défaut vide)
-$submittedUrl = $_GET['url'] ?? '';
-$responseBody = '';
+// URL par défaut
+$defaultUrl = $fleetBaseUrl . '/api/1/vehicles';
+$apiUrl = $_POST['api_url'] ?? $defaultUrl;
+
+// Initialiser la réponse
+$response = '';
+$jsonDecoded = null;
 $httpHeaders = [];
-$statusCode = 0;
 
-if ($submittedUrl) {
-    $opts = [
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $context = [
         'http' => [
             'method' => 'GET',
             'header' => "Authorization: Bearer $accessToken\r\n",
-            'ignore_errors' => true
+            'ignore_errors' => true,
         ]
     ];
 
-    $context = stream_context_create($opts);
-    $responseBody = @file_get_contents($submittedUrl, false, $context);
-
+    // Capture les en-têtes HTTP
+    stream_context_set_default($context);
+    $response = @file_get_contents($apiUrl, false, stream_context_create($context));
+    $jsonDecoded = json_decode($response, true);
     $httpHeaders = $http_response_header ?? [];
-    $statusCode = 0;
-    if (isset($httpHeaders[0]) && preg_match('#HTTP/\d+\.\d+ (\d+)#', $httpHeaders[0], $m)) {
-        $statusCode = (int)$m[1];
-    }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>🔍 Debug Fleet API - Tesla</title>
+    <title>🔧 Test API Tesla Fleet</title>
     <style>
-        body { font-family: sans-serif; padding: 2rem; background: #f4f4f4; }
-        input[type="text"] { width: 90%; padding: 0.5rem; }
-        button { padding: 0.5rem 1rem; }
-        pre { background: #eee; padding: 1rem; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
-        .section { margin-top: 2rem; }
+        body {
+            font-family: sans-serif;
+            background: #f8f9fa;
+            padding: 2rem;
+            color: #333;
+        }
+        h1 {
+            color: #007bff;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #f1f1f1;
+            padding: 10px;
+        }
+        .section {
+            margin-bottom: 2rem;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            background: white;
+        }
+        .section h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 0.95em;
+        }
+        input[type="submit"] {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        pre {
+            background: #f3f3f3;
+            padding: 10px;
+            overflow-x: auto;
+        }
     </style>
 </head>
 <body>
 
-<h1>🚘 Debug Fleet API - Tesla</h1>
-
-<p><strong>Token actuel :</strong></p>
-<pre><?= htmlspecialchars(substr($accessToken, 0, 100)) ?>...</pre>
+<h1>🔧 Debug API Tesla Fleet</h1>
 
 <div class="section">
-    <h2>🧪 Tester une URL Fleet API</h2>
-    <form method="get">
-        <input type="text" name="url" placeholder="Ex: https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles" value="<?= htmlspecialchars($submittedUrl) ?>" required />
-        <button type="submit">Tester</button>
+    <h2>🔐 Token actuel (tronqué)</h2>
+    <code><?= htmlspecialchars(substr($accessToken, 0, 80)) ?>... (<?= strlen($accessToken) ?> caractères)</code>
+</div>
+
+<div class="section">
+    <h2>🔗 Tester une URL Tesla Fleet API</h2>
+    <form method="post">
+        <label for="api_url">URL API à tester :</label>
+        <input type="text" id="api_url" name="api_url" value="<?= htmlspecialchars($apiUrl) ?>">
+        <input type="submit" value="📡 Lancer la requête GET">
     </form>
 </div>
 
-<?php if ($submittedUrl): ?>
+<?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
     <div class="section">
-        <h2>📡 Réponse de Tesla (HTTP <?= $statusCode ?>)</h2>
+        <h2>🌐 URL appelée</h2>
+        <pre><?= htmlspecialchars($apiUrl) ?></pre>
+    </div>
 
-        <h3>📍 URL appelée</h3>
-        <pre><?= htmlspecialchars($submittedUrl) ?></pre>
+    <div class="section">
+        <h2>📨 Réponse brute</h2>
+        <textarea readonly><?= htmlspecialchars($response ?: '❌ Aucune réponse reçue') ?></textarea>
+    </div>
 
-        <h3>🧾 En-têtes HTTP</h3>
+    <div class="section">
+        <h2>📦 JSON décodé</h2>
+        <pre><?= $jsonDecoded ? htmlspecialchars(json_encode($jsonDecoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) : '❌ JSON non valide' ?></pre>
+    </div>
+
+    <div class="section">
+        <h2>📡 En-têtes HTTP</h2>
         <pre><?= htmlspecialchars(implode("\n", $httpHeaders)) ?></pre>
-
-        <h3>📦 Corps brut</h3>
-        <pre><?= htmlspecialchars($responseBody ?: '❌ Aucune réponse') ?></pre>
-
-        <h3>🧠 JSON décodé</h3>
-        <pre><?php
-            $decoded = json_decode($responseBody, true);
-            if ($decoded === null) {
-                echo "⚠️ JSON non valide ou vide.";
-            } else {
-                print_r($decoded);
-            }
-        ?></pre>
     </div>
 <?php endif; ?>
 
