@@ -20,7 +20,7 @@ if (!$accessToken) {
 // 🔥 Requête vers /vehicles (en NA, pour partenaires)
 echo "<h2>🚗 /vehicles (via Partner Token)</h2><pre>";
 
-$vehiclesCurl = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/vehicles');
+$vehiclesCurl = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles');
 curl_setopt_array($vehiclesCurl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
