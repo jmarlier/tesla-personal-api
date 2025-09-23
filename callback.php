@@ -54,8 +54,10 @@ if ($response === false || isset($tokens['error'])) {
 }
 
 // 🧭 Étape 2 : Demander la région de l'utilisateur
+$defaultRegionUrl = 'https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region';
+
 $regionResponse = file_get_contents(
-    'https://fleet-api.teslamotors.com/api/1/users/region',
+    $defaultRegionUrl,
     false,
     stream_context_create([
         'http' => [
