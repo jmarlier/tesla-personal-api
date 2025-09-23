@@ -11,18 +11,15 @@ if (!isset($_GET['code'])) {
     exit('❌ Code manquant dans le callback');
 }
 
-// Récupération du `code` et `state`
 $code = $_GET['code'];
 $state = $_GET['state'] ?? '';
 $codeVerifier = $_SESSION['code_verifier'] ?? '';
 
-// Vérifie le state
 if ($state !== $_SESSION['oauth_state']) {
     exit('❌ Erreur de vérification du state');
 }
 
-// Appel au token endpoint
-$tokenUrl = 'https://auth.tesla.com/oauth2/v3/token';
+// 🔐 Token endpoint
 $fields = http_build_query([
     'grant_type' => 'authorization_code',
     'client_id' => $_ENV['TESLA_CLIENT_ID'],
@@ -31,7 +28,7 @@ $fields = http_build_query([
     'redirect_uri' => $_ENV['TESLA_REDIRECT_URI']
 ]);
 
-$ch = curl_init($tokenUrl);
+$ch = curl_init('https://auth.tesla.com/oauth2/v3/token');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
@@ -43,32 +40,39 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
 curl_close($ch);
 
-echo "<pre><b>📥 Réponse brute de Tesla :</b>\nHTTP Code: $httpCode\nErreur cURL: $error\n\n$response</pre>";
+echo "<b>📥 Réponse brute de Tesla :</b>\nHTTP Code: $httpCode\nErreur cURL: $error\n\n$response</pre>";
 
 $data = json_decode($response, true);
 if (!isset($data['access_token'])) {
     exit("❌ Aucun token utilisateur");
 }
 
-// Affiche token brut
-echo json_encode($data, JSON_PRETTY_PRINT);
-echo "</pre>";
-
-// Stocke en session
-$_SESSION['access_token'] = $data['access_token'];
-$_SESSION['refresh_token'] = $data['refresh_token'] ?? null;
-$_SESSION['id_token'] = $data['id_token'] ?? null;
-$_SESSION['expires_in'] = $data['expires_in'] ?? null;
-$_SESSION['token_type'] = $data['token_type'] ?? null;
+// Affiche le token
+echo "<pre>" . json_encode($data, JSON_PRETTY_PRINT) . "</pre>";
 
 $userToken = $data['access_token'];
+$idToken   = $data['id_token'] ?? '';
 
 //
-// 🌍 1. Appelle /users/region
+// 🧠 Extraire la région (ou_code) depuis l'id_token
+//
+$jwtPayload = explode('.', $idToken)[1] ?? '';
+$jwtJson = base64_decode(strtr($jwtPayload, '-_', '+/'));
+$jwt = json_decode($jwtJson, true);
+$ouCode = strtoupper($jwt['ou_code'] ?? 'EU');
+
+$fleetBaseUrl = match ($ouCode) {
+    'NA' => 'https://fleet-api.prd.na.vn.cloud.tesla.com',
+    'CN' => 'https://fleet-api.prd.cn.vn.cloud.tesla.com',
+    default => 'https://fleet-api.prd.eu.vn.cloud.tesla.com',
+};
+
+//
+// 🌍 /users/region
 //
 echo "<br><b>🌍 Région détectée :</b><br><pre>";
 
-$regionCurl = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region');
+$regionCurl = curl_init($fleetBaseUrl . '/api/1/users/region');
 curl_setopt_array($regionCurl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
@@ -83,20 +87,16 @@ curl_close($regionCurl);
 echo "HTTP Status: $regionHttpCode\n";
 echo $regionResponse . "</pre>";
 
-// Parse region
 $regionData = json_decode($regionResponse, true);
-$fleetBaseUrl = $regionData['fleet_api_base_url'] ?? 'https://fleet-api.prd.eu.vn.cloud.tesla.com';
 $accountId = $regionData['account_id'] ?? null;
 
-// ❗️ Vérifie si déjà enregistré
+//
+// 🧾 Enregistrement utilisateur
+//
 if ($regionHttpCode == 412 && $accountId) {
-    //
-    // 🧾 2. Enregistre l’utilisateur
-    //
     echo "<b>🧾 Enregistrement de l’utilisateur dans la région :</b><br><pre>";
 
-    $registerUrl = $fleetBaseUrl . '/api/1/users/' . $accountId . '/register';
-    $registerCurl = curl_init($registerUrl);
+    $registerCurl = curl_init($fleetBaseUrl . "/api/1/users/$accountId/register");
     curl_setopt_array($registerCurl, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
@@ -104,7 +104,7 @@ if ($regionHttpCode == 412 && $accountId) {
             'Authorization: Bearer ' . $userToken,
             'Content-Type: application/json'
         ],
-        CURLOPT_POSTFIELDS => json_encode([]) // Vide
+        CURLOPT_POSTFIELDS => json_encode([]),
     ]);
     $registerResponse = curl_exec($registerCurl);
     $registerHttpCode = curl_getinfo($registerCurl, CURLINFO_HTTP_CODE);
@@ -115,11 +115,10 @@ if ($regionHttpCode == 412 && $accountId) {
 }
 
 //
-// 🚗 3. Appel /vehicles
+// 🚗 Appel /vehicles
 //
 echo "<b>🚗 /vehicles :</b><br><pre>";
-$vehiclesUrl = $fleetBaseUrl . '/api/1/vehicles';
-$vehiclesCurl = curl_init($vehiclesUrl);
+$vehiclesCurl = curl_init($fleetBaseUrl . '/api/1/vehicles');
 curl_setopt_array($vehiclesCurl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
