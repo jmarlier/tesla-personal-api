@@ -1,33 +1,29 @@
 <?php
-// callback.php
-
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 session_start();
 
-// Chargement des variables d'environnement
 require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-// Vérification des paramètres obligatoires
+// 🔐 Vérification des paramètres
 if (!isset($_GET['code'])) {
     exit('❌ Code d’autorisation manquant.');
 }
 
-if (!isset($_SESSION['code_verifier'])) {
-    exit('❌ Le code_verifier est introuvable en session.');
+if (!isset($_SESSION['code_verifier']) || !isset($_GET['state']) || $_GET['state'] !== $_SESSION['oauth_state']) {
+    exit('❌ Vérification CSRF échouée ou code_verifier manquant.');
 }
 
+// 📥 Récupération des variables
 $code = $_GET['code'];
 $codeVerifier = $_SESSION['code_verifier'];
-
-// Récupération des infos sensibles depuis .env
 $clientId = $_ENV['TESLA_CLIENT_ID'];
 $clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
 $redirectUri = $_ENV['TESLA_REDIRECT_URI'];
 
-// Préparation de la requête POST vers Tesla
+// 🔁 Préparer la requête POST
 $postData = http_build_query([
     'grant_type' => 'authorization_code',
     'client_id' => $clientId,
@@ -49,28 +45,24 @@ $context = [
 $response = file_get_contents('https://auth.tesla.com/oauth2/v3/token', false, stream_context_create($context));
 
 if ($response === false) {
-    echo "<h3>❌ Erreur lors de la récupération des tokens Tesla</h3>";
-    echo "<pre>";
+    echo "<h3>❌ Erreur lors de la récupération des tokens Tesla</h3><pre>";
     print_r(error_get_last());
     echo "</pre>";
     exit;
 }
 
-// Traitement de la réponse
 $tokens = json_decode($response, true);
 
 if (isset($tokens['error'])) {
-    echo "<h3>❌ Erreur retournée par Tesla :</h3>";
-    echo "<pre>";
+    echo "<h3>❌ Erreur retournée par Tesla :</h3><pre>";
     print_r($tokens);
     echo "</pre>";
     exit;
 }
 
-// Affichage (temporaire — à supprimer en production)
-echo "<h3>✅ Tokens reçus :</h3>";
-echo "<pre>";
-print_r($tokens);
-echo "</pre>";
+// ✅ Sauvegarder les tokens dans un fichier
+file_put_contents(__DIR__ . '/tokens.json', json_encode($tokens, JSON_PRETTY_PRINT));
 
-// TODO : ici tu peux stocker les tokens (en DB ou fichier sécurisé) et rediriger vers ton interface
+// ✅ Redirection ou affichage temporaire
+header('Location: vehicles.php');
+exit;
