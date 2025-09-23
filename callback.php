@@ -83,6 +83,16 @@ $fleetResponse = file_get_contents(
 
 $fleetTokens = json_decode($fleetResponse, true);
 
+echo "<h3>🐞 DEBUG FLEET API</h3><pre>";
+echo "🔐 Token utilisé :\n" . htmlspecialchars($tokens['access_token']) . "\n\n";
+echo "📤 Corps envoyé :\n";
+print_r($fleetRequest);
+echo "\n📨 Réponse brute :\n" . htmlspecialchars($fleetResponse);
+echo "\n\n📦 Réponse JSON :\n";
+print_r($fleetTokens);
+echo "</pre>";
+exit;
+
 // ✅ Vérification étape 2 : échange Fleet API
 if ($fleetResponse === false || !isset($fleetTokens['access_token'])) {
     echo "<h3>❌ Erreur lors de l’échange vers Fleet API (fleet-api.teslamotors.com)</h3><pre>";
