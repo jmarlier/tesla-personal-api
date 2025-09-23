@@ -1,38 +1,60 @@
 <?php
-// Affiche les erreurs PHP
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+require __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
-// Charger le token depuis tokens.json
-$tokensFile = __DIR__ . '/tokens.json';
-
-if (!file_exists($tokensFile)) {
-    exit('❌ Fichier tokens.json introuvable. Veuillez d’abord vous authentifier via login.php');
+// Lecture du token utilisateur
+$tokenPath = __DIR__ . '/tokens.json';
+if (!file_exists($tokenPath)) {
+    exit("❌ Aucun fichier tokens.json trouvé");
 }
 
-$tokens = json_decode(file_get_contents($tokensFile), true);
+$tokens = json_decode(file_get_contents($tokenPath), true);
 $accessToken = $tokens['access_token'] ?? null;
 
 if (!$accessToken) {
-    exit('❌ access_token manquant dans tokens.json');
+    exit("❌ Aucun token d'accès valide trouvé");
 }
 
-// Appel à /vehicles
-$ch = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles');
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER     => [
-        'Authorization: Bearer ' . $accessToken,
-        'Content-Type: application/json',
-    ],
-]);
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+//
+// 1. Requête vers /users/region
+//
+echo "<h2>🌍 /users/region</h2><pre>";
 
-// Affichage du résultat
-header('Content-Type: application/json; charset=utf-8');
-echo json_encode([
-    'http_code' => $httpCode,
-    'response'  => json_decode($response, true),
-], JSON_PRETTY_PRINT);
+$regionCurl = curl_init('https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/users/region');
+curl_setopt_array($regionCurl, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json'
+    ]
+]);
+$regionResponse = curl_exec($regionCurl);
+$regionHttpCode = curl_getinfo($regionCurl, CURLINFO_HTTP_CODE);
+curl_close($regionCurl);
+
+echo "HTTP Status: $regionHttpCode\n";
+echo $regionResponse . "</pre>";
+
+$regionData = json_decode($regionResponse, true);
+$fleetBaseUrl = $regionData['fleet_api_base_url'] ?? 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+
+//
+// 2. Requête vers /vehicles
+//
+echo "<h2>🚗 /vehicles</h2><pre>";
+
+$vehiclesCurl = curl_init($fleetBaseUrl . '/api/1/vehicles');
+curl_setopt_array($vehiclesCurl, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json'
+    ]
+]);
+$vehiclesResponse = curl_exec($vehiclesCurl);
+$vehiclesHttpCode = curl_getinfo($vehiclesCurl, CURLINFO_HTTP_CODE);
+curl_close($vehiclesCurl);
+
+echo "HTTP Status: $vehiclesHttpCode\n";
+echo $vehiclesResponse . "</pre>";
