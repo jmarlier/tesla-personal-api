@@ -37,3 +37,22 @@ file_put_contents('tokens.json', json_encode($data, JSON_PRETTY_PRINT));
 
 header('Content-Type: application/json');
 echo json_encode($data, JSON_PRETTY_PRINT);
+
+// === Appel API /vehicles
+$ch3 = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles');
+curl_setopt_array($ch3, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $data['access_token'],
+        'Content-Type: application/json'
+    ]
+]);
+$responseVehicles = curl_exec($ch3);
+$httpCodeVehicles = curl_getinfo($ch3, CURLINFO_HTTP_CODE);
+curl_close($ch3);
+
+// === Affichage
+echo "<br><b>🚗 /vehicles :</b><br><pre>";
+echo "HTTP Status: $httpCodeVehicles\n";
+echo json_encode(json_decode($responseVehicles, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+echo "</pre>";
