@@ -1,9 +1,7 @@
 <?php
 require __DIR__ . '/vendor/autoload.php';
 
-use Symfony\Component\Dotenv\Dotenv;
-
-$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 session_start();
