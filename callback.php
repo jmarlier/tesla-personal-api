@@ -60,9 +60,44 @@ if (isset($tokens['error'])) {
     exit;
 }
 
-// ✅ Sauvegarder les tokens dans un fichier
-file_put_contents(__DIR__ . '/tokens.json', json_encode($tokens, JSON_PRETTY_PRINT));
+// ✅ À ce point, $tokens['access_token'] contient le token issu d'auth.tesla.com
 
-// ✅ Redirection ou affichage temporaire
+// ⚡️ Étape 2 : Échanger pour un token Fleet API
+$fleetRequest = [
+    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+    'client_id' => 'ownerapi',
+    'assertion' => $tokens['access_token'],
+    'scope' => 'openid vehicle_read vehicle_write'
+];
+
+$fleetContext = [
+    'http' => [
+        'method' => 'POST',
+        'header' => "Content-Type: application/json\r\n",
+        'content' => json_encode($fleetRequest),
+        'ignore_errors' => true
+    ]
+];
+
+$fleetResponse = file_get_contents(
+    'https://fleet-api.teslamotors.com/oauth/token',
+    false,
+    stream_context_create($fleetContext)
+);
+
+$fleetTokens = json_decode($fleetResponse, true);
+
+// 🔁 Vérification du retour
+if (!isset($fleetTokens['access_token'])) {
+    echo "<h3>❌ Erreur lors de l’échange Fleet API</h3><pre>";
+    print_r($fleetTokens);
+    echo "</pre>";
+    exit;
+}
+
+// 📝 Écraser le fichier avec le token Fleet uniquement
+file_put_contents(__DIR__ . '/tokens.json', json_encode($fleetTokens, JSON_PRETTY_PRINT));
+
+// 🔄 Redirection finale
 header('Location: vehicles.php');
 exit;
