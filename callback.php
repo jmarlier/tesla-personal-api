@@ -1,16 +1,7 @@
 <?php
-
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/php-error.log'); // 🔁 modifiable
-error_reporting(E_ALL);
-
 require __DIR__ . '/vendor/autoload.php';
-
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__); $dotenv->load();
 session_start();
 
 if ($_GET['state'] !== $_SESSION['oauth_state']) {
@@ -18,29 +9,18 @@ if ($_GET['state'] !== $_SESSION['oauth_state']) {
 }
 
 $code = $_GET['code'] ?? null;
-if (!$code) {
-    exit('❌ Aucun code reçu.');
-}
+if (!$code) exit('❌ Aucun code reçu.');
 
-$clientId = $_ENV['TESLA_CLIENT_ID'];
-$clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
-$redirectUri = $_ENV['TESLA_REDIRECT_URI'];
-$domain = $_ENV['TESLA_DOMAIN'] ?? 'app.jeromemarlier.com';
-$codeVerifier = $_SESSION['code_verifier'];
-
-$tokenUrl = 'https://auth.tesla.com/oauth2/v3/token';
-
-// === ÉTAPE 1 : échange code ↔ token
 $fields = http_build_query([
     'grant_type' => 'authorization_code',
-    'client_id' => $clientId,
-    'client_secret' => $clientSecret,
+    'client_id' => $_ENV['TESLA_CLIENT_ID'],
+    'client_secret' => $_ENV['TESLA_CLIENT_SECRET'],
     'code' => $code,
-    'code_verifier' => $codeVerifier,
-    'redirect_uri' => $redirectUri,
+    'code_verifier' => $_SESSION['code_verifier'],
+    'redirect_uri' => $_ENV['TESLA_REDIRECT_URI'],
 ]);
 
-$ch = curl_init($tokenUrl);
+$ch = curl_init('https://auth.tesla.com/oauth2/v3/token');
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
@@ -51,37 +31,9 @@ $response = curl_exec($ch);
 curl_close($ch);
 
 $data = json_decode($response, true);
+if (!isset($data['access_token'])) exit("❌ Token utilisateur non reçu.");
 
-// === Affichage JSON brut
-header('Content-Type: application/json; charset=utf-8');
-echo "🔑 <b>partner_access_token reçu :</b><br><pre>";
-echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-echo "</pre>";
+file_put_contents('tokens.json', json_encode($data, JSON_PRETTY_PRINT));
 
-// === Vérif access_token
-if (!isset($data['access_token'])) {
-    exit("❌ Token non reçu ou invalide.");
-}
-
-$accessToken = $data['access_token'];
-
-// === ÉTAPE 2 : Appeler /partner_accounts
-$ch2 = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/partner_accounts');
-curl_setopt_array($ch2, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_HTTPHEADER => [
-        'Authorization: Bearer ' . $accessToken,
-        'Content-Type: application/json'
-    ],
-    CURLOPT_POSTFIELDS => json_encode(['domain' => $domain])
-]);
-$partnerResponse = curl_exec($ch2);
-$httpCode = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-curl_close($ch2);
-
-// === Affichage retour Tesla Fleet
-echo "<br>📡 <b>Réponse /partner_accounts :</b><br><pre>";
-echo "HTTP Status: $httpCode\n";
-echo json_encode(json_decode($partnerResponse, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-echo "</pre>";
+header('Content-Type: application/json');
+echo json_encode($data, JSON_PRETTY_PRINT);
