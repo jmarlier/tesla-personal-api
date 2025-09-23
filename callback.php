@@ -39,9 +39,13 @@ curl_setopt_array($ch, [
     CURLOPT_POSTFIELDS => $fields,
 ]);
 $response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$error = curl_error($ch);
 curl_close($ch);
-$data = json_decode($response, true);
 
+echo "<pre><b>📥 Réponse brute de Tesla :</b>\nHTTP Code: $httpCode\nErreur cURL: $error\n\n$response</pre>";
+
+$data = json_decode($response, true);
 if (!isset($data['access_token'])) {
     exit("❌ Aucun token utilisateur");
 }
