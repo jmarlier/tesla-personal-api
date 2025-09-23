@@ -21,11 +21,12 @@ if ($state !== $_SESSION['oauth_state']) {
 
 // 🔐 Token endpoint
 $fields = http_build_query([
-    'grant_type' => 'authorization_code',
-    'client_id' => $_ENV['TESLA_CLIENT_ID'],
-    'code' => $code,
+    'grant_type'    => 'authorization_code',
+    'client_id'     => $_ENV['TESLA_CLIENT_ID'],
+    'client_secret' => $_ENV['TESLA_CLIENT_SECRET'], // 🔑 ajout nécessaire
+    'code'          => $code,
     'code_verifier' => $codeVerifier,
-    'redirect_uri' => $_ENV['TESLA_REDIRECT_URI']
+    'redirect_uri'  => $_ENV['TESLA_REDIRECT_URI']
 ]);
 
 $ch = curl_init('https://auth.tesla.com/oauth2/v3/token');
