@@ -61,3 +61,10 @@ file_put_contents(__DIR__ . '/tokens.json', json_encode($data, JSON_PRETTY_PRINT
 echo "<h2>✅ Tokens enregistrés dans <code>tokens.json</code> :</h2><pre>";
 echo json_encode($data, JSON_PRETTY_PRINT);
 echo "</pre>";
+
+// Affichage final de /vehicles
+echo "HTTP Status: $vehiclesHttpCode\n";
+echo $vehiclesResponse . "</pre>";
+
+// 🔗 Lien vers vehicles.php
+echo '<hr><p>➡️ <a href="vehicles.php">Voir les véhicules via /vehicles</a></p>';
