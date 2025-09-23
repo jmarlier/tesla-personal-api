@@ -21,7 +21,7 @@ if (!$accessToken) {
 //
 echo "<h2>🌍 /users/region</h2><pre>";
 
-$regionCurl = curl_init('https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/users/region');
+$regionCurl = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region');
 curl_setopt_array($regionCurl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
@@ -37,7 +37,7 @@ echo "HTTP Status: $regionHttpCode\n";
 echo $regionResponse . "</pre>";
 
 $regionData = json_decode($regionResponse, true);
-$fleetBaseUrl = $regionData['fleet_api_base_url'] ?? 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+$fleetBaseUrl = $regionData['fleet_api_base_url'] ?? 'https://fleet-api.prd.eu.vn.cloud.tesla.com';
 
 //
 // 2. Requête vers /vehicles
