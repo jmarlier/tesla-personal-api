@@ -69,5 +69,8 @@ echo $vehiclesResponse . "</pre>";
 // 🔗 Lien vers vehicles.php
 echo '<hr><p>➡️ <a href="vehicles.php">Voir les véhicules via /vehicles</a></p>';
 
+// 🔗 Lien vers vehicles_bis.php
+echo '<hr><p>➡️ <a href="vehicles_bis.php">Voir les véhicules via /vehicles</a></p>';
+
 // 🔗 Lien vers partner.php
 echo '<br><a href="partner.php" target="_blank">🔑 Générer un Partner Token</a>';
