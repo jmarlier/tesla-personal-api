@@ -113,7 +113,7 @@ echo json_encode(json_decode($regionResponse, true), JSON_PRETTY_PRINT);
 echo "</pre>";
 
 // === 🧾 Enregistrement utilisateur
-$registerUser = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/partner_accounts/register');
+$registerUser = curl_init("https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/{$accountId}/register");
 curl_setopt_array($registerUser, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
