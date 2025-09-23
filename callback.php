@@ -20,6 +20,8 @@ if ($state !== $_SESSION['oauth_state']) {
 }
 
 // 🔐 Token endpoint
+$tokenUrl = 'https://auth.tesla.com/oauth2/v3/token';
+
 $clientId     = $_ENV['TESLA_CLIENT_ID'];
 $clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
 $basicAuth    = base64_encode("$clientId:$clientSecret");
@@ -41,6 +43,7 @@ curl_setopt_array($ch, [
     ],
     CURLOPT_POSTFIELDS => $fields,
 ]);
+
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
