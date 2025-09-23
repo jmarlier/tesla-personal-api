@@ -23,7 +23,7 @@ $clientId = $_ENV['TESLA_CLIENT_ID'];
 $clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
 $redirectUri = $_ENV['TESLA_REDIRECT_URI'];
 
-// 🔁 Étape 1 : Récupération du token depuis auth.tesla.com
+// 🔁 Étape 1 : Obtenir le token via auth.tesla.com
 $postData = http_build_query([
     'grant_type' => 'authorization_code',
     'client_id' => $clientId,
@@ -53,7 +53,33 @@ if ($response === false || isset($tokens['error'])) {
     exit;
 }
 
-// 🔁 Étape 2 : Échange du token pour un token Fleet API
+// 🧭 Étape 2 : Demander la région de l'utilisateur
+$regionResponse = file_get_contents(
+    'https://fleet-api.teslamotors.com/api/1/users/region',
+    false,
+    stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'header' => "Authorization: Bearer " . $tokens['access_token'] . "\r\n",
+            'ignore_errors' => true
+        ]
+    ])
+);
+
+$regionData = json_decode($regionResponse, true);
+
+if (!isset($regionData['response']['fleet_api_base_url'])) {
+    echo "<h3>❌ Impossible de déterminer la région Fleet API</h3><pre>";
+    echo "Réponse brute :\n" . htmlspecialchars($regionResponse);
+    echo "\n\nJSON :\n";
+    print_r($regionData);
+    echo "</pre>";
+    exit;
+}
+
+$fleetApiBase = $regionData['response']['fleet_api_base_url'];
+
+// 🔁 Étape 3 : Échanger le token contre un token Fleet API (régional)
 $fleetRequest = [
     'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
     'client_id' => 'ownerapi',
@@ -62,7 +88,7 @@ $fleetRequest = [
 ];
 
 $fleetResponse = file_get_contents(
-    'https://fleet-api.teslamotors.com/oauth/token',
+    $fleetApiBase . '/oauth/token',
     false,
     stream_context_create([
         'http' => [
@@ -78,6 +104,7 @@ $fleetTokens = json_decode($fleetResponse, true);
 
 if (!isset($fleetTokens['access_token'])) {
     echo "<h3>❌ Erreur lors de l’échange vers Fleet API</h3><pre>";
+    echo "Fleet URL : $fleetApiBase\n";
     echo "Réponse brute :\n" . htmlspecialchars($fleetResponse);
     echo "\n\nJSON :\n";
     print_r($fleetTokens);
@@ -85,28 +112,12 @@ if (!isset($fleetTokens['access_token'])) {
     exit;
 }
 
-// 🌍 Étape 3 : Déterminer la région du compte Tesla
-$regionResponse = file_get_contents(
-    'https://fleet-api.teslamotors.com/api/1/users/region',
-    false,
-    stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => "Authorization: Bearer " . $fleetTokens['access_token'] . "\r\n",
-            'ignore_errors' => true
-        ]
-    ])
-);
-
-$regionData = json_decode($regionResponse, true);
-$fleetApiBase = $regionData['response']['fleet_api_base_url'] ?? 'https://fleet-api.teslamotors.com';
-
-// ➕ Ajouter la base URL régionale au token
+// ➕ Ajouter l’URL Fleet API utilisée
 $fleetTokens['fleet_api_base_url'] = $fleetApiBase;
 
-// 💾 Sauvegarde du token final
+// 💾 Sauvegarde dans un fichier JSON
 file_put_contents(__DIR__ . '/tokens.json', json_encode($fleetTokens, JSON_PRETTY_PRINT));
 
-// ✅ Redirection finale vers interface véhicules
+// ✅ Redirection finale
 header('Location: vehicles.php');
 exit;
