@@ -23,7 +23,7 @@ $clientId = $_ENV['TESLA_CLIENT_ID'];
 $clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
 $redirectUri = $_ENV['TESLA_REDIRECT_URI'];
 
-// 🔁 Étape 1 : Obtenir le token via auth.tesla.com
+// 🔁 Requête POST vers auth.tesla.com pour récupérer le token utilisateur
 $postData = http_build_query([
     'grant_type' => 'authorization_code',
     'client_id' => $clientId,
@@ -33,55 +33,32 @@ $postData = http_build_query([
     'redirect_uri' => $redirectUri,
 ]);
 
-$response = file_get_contents('https://auth.tesla.com/oauth2/v3/token', false, stream_context_create([
+$context = [
     'http' => [
         'method' => 'POST',
         'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
         'content' => $postData,
         'ignore_errors' => true
     ]
-]));
+];
 
+$response = file_get_contents('https://auth.tesla.com/oauth2/v3/token', false, stream_context_create($context));
 $tokens = json_decode($response, true);
 
+// ✅ Vérification étape 1 : Auth Tesla
 if ($response === false || isset($tokens['error'])) {
-    echo "<h3>❌ Erreur auth.tesla.com</h3><pre>";
+    echo "<h3>❌ Erreur lors de l’authentification Tesla (auth.tesla.com)</h3><pre>";
+    echo "Réponse brute :\n";
     echo htmlspecialchars($response);
-    echo "\n\n";
+    echo "\n\nErreur PHP :\n";
+    print_r(error_get_last());
+    echo "\n\nErreur JSON :\n";
     print_r($tokens);
     echo "</pre>";
     exit;
 }
 
-// 🧭 Étape 2 : Demander la région de l'utilisateur
-$defaultRegionUrl = 'https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region';
-
-$regionResponse = file_get_contents(
-    $defaultRegionUrl,
-    false,
-    stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => "Authorization: Bearer " . $tokens['access_token'] . "\r\n",
-            'ignore_errors' => true
-        ]
-    ])
-);
-
-$regionData = json_decode($regionResponse, true);
-
-if (!isset($regionData['response']['fleet_api_base_url'])) {
-    echo "<h3>❌ Impossible de déterminer la région Fleet API</h3><pre>";
-    echo "Réponse brute :\n" . htmlspecialchars($regionResponse);
-    echo "\n\nJSON :\n";
-    print_r($regionData);
-    echo "</pre>";
-    exit;
-}
-
-$fleetApiBase = $regionData['response']['fleet_api_base_url'];
-
-// 🔁 Étape 3 : Échanger le token contre un token Fleet API (régional)
+// 🔁 Étape 2 : Échange vers un token Fleet API (obligatoire)
 $fleetRequest = [
     'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
     'client_id' => 'ownerapi',
@@ -89,37 +66,41 @@ $fleetRequest = [
     'scope' => 'openid vehicle_read vehicle_write'
 ];
 
+$fleetContext = [
+    'http' => [
+        'method' => 'POST',
+        'header' => "Content-Type: application/json\r\n",
+        'content' => json_encode($fleetRequest),
+        'ignore_errors' => true
+    ]
+];
+
 $fleetResponse = file_get_contents(
-    $fleetApiBase . '/oauth/token',
+    'https://fleet-api.teslamotors.com/oauth/token',
     false,
-    stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\n",
-            'content' => json_encode($fleetRequest),
-            'ignore_errors' => true
-        ]
-    ])
+    stream_context_create($fleetContext)
 );
 
 $fleetTokens = json_decode($fleetResponse, true);
 
-if (!isset($fleetTokens['access_token'])) {
-    echo "<h3>❌ Erreur lors de l’échange vers Fleet API</h3><pre>";
-    echo "Fleet URL : $fleetApiBase\n";
-    echo "Réponse brute :\n" . htmlspecialchars($fleetResponse);
-    echo "\n\nJSON :\n";
+// ✅ Vérification étape 2 : échange Fleet API
+if ($fleetResponse === false || !isset($fleetTokens['access_token'])) {
+    echo "<h3>❌ Erreur lors de l’échange vers Fleet API (fleet-api.teslamotors.com)</h3><pre>";
+    echo "Requête envoyée :\n";
+    print_r($fleetRequest);
+    echo "\nRéponse brute :\n";
+    echo htmlspecialchars($fleetResponse ?: 'Aucune réponse');
+    echo "\n\nErreur PHP :\n";
+    print_r(error_get_last());
+    echo "\n\nRéponse JSON :\n";
     print_r($fleetTokens);
     echo "</pre>";
     exit;
 }
 
-// ➕ Ajouter l’URL Fleet API utilisée
-$fleetTokens['fleet_api_base_url'] = $fleetApiBase;
-
-// 💾 Sauvegarde dans un fichier JSON
+// 💾 Stocker le token Fleet API uniquement
 file_put_contents(__DIR__ . '/tokens.json', json_encode($fleetTokens, JSON_PRETTY_PRINT));
 
-// ✅ Redirection finale
+// ✅ Redirection finale vers interface
 header('Location: vehicles.php');
 exit;
