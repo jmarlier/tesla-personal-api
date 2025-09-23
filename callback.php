@@ -24,6 +24,7 @@ $tokenUrl = 'https://auth.tesla.com/oauth2/v3/token';
 $fields = http_build_query([
     'grant_type' => 'authorization_code',
     'client_id' => $clientId,
+    'client_secret' => $_ENV['TESLA_CLIENT_SECRET'],
     'code' => $code,
     'code_verifier' => $codeVerifier,
     'redirect_uri' => $redirectUri,
