@@ -20,20 +20,25 @@ if ($state !== $_SESSION['oauth_state']) {
 }
 
 // 🔐 Token endpoint
+$clientId     = $_ENV['TESLA_CLIENT_ID'];
+$clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
+$basicAuth    = base64_encode("$clientId:$clientSecret");
+
 $fields = http_build_query([
     'grant_type'    => 'authorization_code',
-    'client_id'     => $_ENV['TESLA_CLIENT_ID'],
-    'client_secret' => $_ENV['TESLA_CLIENT_SECRET'], // 🔑 ajout nécessaire
     'code'          => $code,
     'code_verifier' => $codeVerifier,
     'redirect_uri'  => $_ENV['TESLA_REDIRECT_URI']
 ]);
 
-$ch = curl_init('https://auth.tesla.com/oauth2/v3/token');
+$ch = curl_init($tokenUrl);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => [
+        'Authorization: Basic ' . $basicAuth,
+        'Content-Type: application/x-www-form-urlencoded',
+    ],
     CURLOPT_POSTFIELDS => $fields,
 ]);
 $response = curl_exec($ch);
