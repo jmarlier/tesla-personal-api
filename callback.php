@@ -76,7 +76,7 @@ $fleetContext = [
 ];
 
 $fleetResponse = file_get_contents(
-    'https://fleet-api.teslamotors.com/oauth/token',
+    'https://fleet-api.prd.eu.vn.cloud.tesla.com/oauth/token',
     false,
     stream_context_create($fleetContext)
 );
