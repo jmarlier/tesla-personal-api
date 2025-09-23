@@ -1,119 +1,73 @@
 <?php
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/php-error.log');
-error_reporting(E_ALL);
-
 require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
-
 session_start();
 
-if ($_GET['state'] !== $_SESSION['oauth_state']) {
-    exit('❌ État CSRF invalide.');
+// Token utilisateur
+$accessToken = $_SESSION['access_token'] ?? null;
+if (!$accessToken) exit("❌ Aucun token utilisateur");
+
+// 🔑 Affiche token utilisateur
+echo "<b>🔑 Token utilisateur reçu :</b><br><pre>" . json_encode([
+    'access_token' => $accessToken,
+    'refresh_token' => $_SESSION['refresh_token'] ?? null,
+    'id_token' => $_SESSION['id_token'] ?? null,
+    'expires_in' => $_SESSION['expires_in'] ?? null,
+    'state' => $_SESSION['state'] ?? null,
+    'token_type' => $_SESSION['token_type'] ?? null
+], JSON_PRETTY_PRINT) . "</pre>";
+
+// 1️⃣ Demande la région de l’utilisateur
+$regionCurl = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region');
+curl_setopt_array($regionCurl, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Authorization: Bearer ' . $accessToken,
+        'Content-Type: application/json'
+    ]
+]);
+$regionResponse = curl_exec($regionCurl);
+$regionCode = curl_getinfo($regionCurl, CURLINFO_HTTP_CODE);
+curl_close($regionCurl);
+
+echo "<b>🌍 Région détectée :</b><br><pre>HTTP Status: $regionCode\n$regionResponse</pre>";
+
+$regionData = json_decode($regionResponse, true);
+$baseUrl = $regionData['response']['fleet_api_base_url'] ?? null;
+$accountId = $regionData['response']['account_id'] ?? null;
+
+if (!$baseUrl || !$accountId) {
+    exit("❌ Impossible de détecter la région ou l'account_id");
 }
 
-$code = $_GET['code'] ?? null;
-if (!$code) {
-    exit('❌ Aucun code reçu.');
-}
-
-$clientId = $_ENV['TESLA_CLIENT_ID'];
-$clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
-$redirectUri = $_ENV['TESLA_REDIRECT_URI'];
-$domain = $_ENV['TESLA_DOMAIN'] ?? 'app.jeromemarlier.com';
-$codeVerifier = $_SESSION['code_verifier'];
-
-$tokenUrl = 'https://auth.tesla.com/oauth2/v3/token';
-
+// 2️⃣ Récupère un PARTNER token
 $fields = http_build_query([
-    'grant_type' => 'authorization_code',
-    'client_id' => $clientId,
-    'client_secret' => $clientSecret,
-    'code' => $code,
-    'code_verifier' => $codeVerifier,
-    'redirect_uri' => $redirectUri,
-]);
-
-$ch = curl_init($tokenUrl);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-    CURLOPT_POSTFIELDS => $fields,
-]);
-$response = curl_exec($ch);
-curl_close($ch);
-
-$data = json_decode($response, true);
-header('Content-Type: application/json; charset=utf-8');
-
-echo "🔑 <b>Token utilisateur reçu :</b><br><pre>";
-echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-echo "</pre><br>";
-
-if (!isset($data['access_token'])) {
-    exit("❌ Token utilisateur non reçu.");
-}
-
-$userToken = $data['access_token'];
-
-// === 🔐 PARTNER TOKEN
-$partnerFields = http_build_query([
     'grant_type' => 'client_credentials',
-    'client_id' => $clientId,
-    'client_secret' => $clientSecret,
+    'client_id' => $_ENV['TESLA_CLIENT_ID'],
+    'client_secret' => $_ENV['TESLA_CLIENT_SECRET'],
     'scope' => 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds',
-    'audience' => 'https://fleet-api.prd.eu.vn.cloud.tesla.com'
+    'audience' => $baseUrl
 ]);
 
-$ch2 = curl_init('https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token');
-curl_setopt_array($ch2, [
+$partnerCurl = curl_init('https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token');
+curl_setopt_array($partnerCurl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
     CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-    CURLOPT_POSTFIELDS => $partnerFields
+    CURLOPT_POSTFIELDS => $fields
 ]);
-$partnerResponse = curl_exec($ch2);
-curl_close($ch2);
+$partnerResponse = curl_exec($partnerCurl);
+curl_close($partnerCurl);
 $partnerData = json_decode($partnerResponse, true);
 $partnerToken = $partnerData['access_token'] ?? null;
 
 if (!$partnerToken) {
-    exit("❌ Partner access_token non reçu.");
+    exit("❌ Partner token non reçu");
 }
 
-// === 🧠 Extraire account_id depuis userToken (JWT)
-$parts = explode('.', $userToken);
-$payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
-$accountId = $payload['account_id'] ?? null;
-
-if (!$accountId) {
-    exit("❌ Impossible d’extraire l’account_id du token utilisateur.");
-}
-
-// === 🌍 Vérifier la région
-$regionCheck = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/region');
-curl_setopt_array($regionCheck, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        'Authorization: Bearer ' . $userToken
-    ]
-]);
-$regionResponse = curl_exec($regionCheck);
-$regionHttpCode = curl_getinfo($regionCheck, CURLINFO_HTTP_CODE);
-curl_close($regionCheck);
-
-echo "<b>🌍 Région détectée :</b><br><pre>";
-echo "HTTP Status: $regionHttpCode\n";
-echo json_encode(json_decode($regionResponse, true), JSON_PRETTY_PRINT);
-echo "</pre>";
-
-// === 🧾 Enregistrement utilisateur
-$registerUser = curl_init("https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/users/{$accountId}/register");
+// 3️⃣ Enregistrement de l’utilisateur dans sa région
+$registerUser = curl_init("$baseUrl/api/1/users/{$accountId}/register");
 curl_setopt_array($registerUser, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
@@ -127,24 +81,19 @@ $registerUserResponse = curl_exec($registerUser);
 $registerUserCode = curl_getinfo($registerUser, CURLINFO_HTTP_CODE);
 curl_close($registerUser);
 
-echo "<b>🧾 Enregistrement de l’utilisateur dans la région :</b><br><pre>";
-echo "HTTP Status: $registerUserCode\n";
-echo json_encode(json_decode($registerUserResponse, true), JSON_PRETTY_PRINT);
-echo "</pre>";
+echo "<b>🧾 Enregistrement de l’utilisateur dans la région :</b><br><pre>HTTP Status: $registerUserCode\n";
+echo json_encode(json_decode($registerUserResponse, true), JSON_PRETTY_PRINT) . "</pre>";
 
-// === 🚗 Appel /vehicles
-$vehicles = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles');
+// 4️⃣ Appelle /vehicles
+$vehicles = curl_init("$baseUrl/api/1/vehicles");
 curl_setopt_array($vehicles, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
-        'Authorization: Bearer ' . $userToken
+        'Authorization: Bearer ' . $accessToken
     ]
 ]);
 $vehiclesResponse = curl_exec($vehicles);
 $vehiclesCode = curl_getinfo($vehicles, CURLINFO_HTTP_CODE);
 curl_close($vehicles);
 
-echo "<b>🚗 /vehicles :</b><br><pre>";
-echo "HTTP Status: $vehiclesCode\n";
-echo json_encode(json_decode($vehiclesResponse, true), JSON_PRETTY_PRINT);
-echo "</pre>";
+echo "<b>🚗 /vehicles :</b><br><pre>HTTP Status: $vehiclesCode\n$vehiclesResponse</pre>";
