@@ -56,12 +56,12 @@ if (!file_exists($registerLock)) {
     $httpCode  = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
     curl_close($ch2);
 
-    if ($httpCode === 200) {
-        file_put_contents($registerLock, 'OK');
-        error_log("✅ Enregistrement partenaire réussi à " . date('c'));
-    } else {
-        exit("❌ Échec de l’enregistrement partenaire ($httpCode).");
-    }
+if ($httpCode === 200 || $httpCode === 422) {
+    file_put_contents($registerLock, 'OK');
+    error_log("ℹ️ Enregistrement partenaire déjà existant ou réussi à " . date('c'));
+} else {
+    exit("❌ Échec de l’enregistrement partenaire ($httpCode).");
+}
 }
 
 // 🚀 Étape 2 : Préparer la redirection OAuth
