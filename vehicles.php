@@ -16,7 +16,7 @@ if (!$accessToken || !$apiBase) {
     exit('❌ Token ou base URL manquante.');
 }
 
-// 🔍 Étape 1 : Récupérer le véhicule
+// 🔍 Appel de l’API /vehicles
 $vehicleList = file_get_contents(
     $apiBase . '/api/1/vehicles',
     false,
@@ -29,58 +29,28 @@ $vehicleList = file_get_contents(
     ])
 );
 
+$http_response_header = $http_response_header ?? [];
+
 $vehicleData = json_decode($vehicleList, true);
 $vehicles = $vehicleData['response'] ?? [];
 
+// 🔧 Affichage complet pour debug
+echo "<h1>🚘 DEBUG VÉHICULES</h1>";
+echo "<h2>🌐 URL appelée :</h2><pre>{$apiBase}/api/1/vehicles</pre>";
+echo "<h2>🔐 Access Token (tronqué) :</h2><pre>" . substr($accessToken, 0, 40) . "...</pre>";
+echo "<h2>📨 Réponse brute :</h2><pre>" . htmlspecialchars($vehicleList) . "</pre>";
+echo "<h2>📦 JSON décodé :</h2><pre>";
+print_r($vehicleData);
+echo "</pre>";
+echo "<h2>📡 En-têtes HTTP :</h2><pre>";
+print_r($http_response_header);
+echo "</pre>";
+
 if (empty($vehicles)) {
-    exit('🚫 Aucun véhicule trouvé.');
+    echo "<h2>🚫 Aucun véhicule trouvé.</h2>";
+    exit;
 }
 
-$vehicleId = $vehicles[0]['id'];
-
-// 🔍 Étape 2 : Récupérer toutes les données du véhicule
-$vehicleDetails = file_get_contents(
-    $apiBase . "/api/1/vehicles/{$vehicleId}/vehicle_data",
-    false,
-    stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => "Authorization: Bearer $accessToken\r\n",
-            'ignore_errors' => true
-        ]
-    ])
-);
-
-$data = json_decode($vehicleDetails, true);
-$response = $data['response'] ?? null;
-
-if (!$response) {
-    exit('❌ Impossible de récupérer les données du véhicule.');
-}
-
-// 🔧 Affichage des infos
-echo "<h1>🚘 Informations Tesla</h1>";
-
-echo "<h2>📋 Général</h2><ul>";
-echo "<li>Nom : " . htmlspecialchars($response['display_name']) . "</li>";
-echo "<li>VIN : " . htmlspecialchars($response['vin']) . "</li>";
-echo "<li>État : " . htmlspecialchars($response['state']) . "</li>";
-echo "</ul>";
-
-echo "<h2>🔋 Batterie</h2><ul>";
-echo "<li>Niveau : " . $response['charge_state']['battery_level'] . "%</li>";
-echo "<li>Autonomie : " . $response['charge_state']['battery_range'] . " km</li>";
-echo "<li>Charge : " . $response['charge_state']['charging_state'] . "</li>";
-echo "</ul>";
-
-echo "<h2>🌡️ Climatisation</h2><ul>";
-echo "<li>Temp. intérieure : " . $response['climate_state']['inside_temp'] . "°C</li>";
-echo "<li>Temp. extérieure : " . $response['climate_state']['outside_temp'] . "°C</li>";
-echo "<li>Clim en cours : " . ($response['climate_state']['is_climate_on'] ? 'Oui' : 'Non') . "</li>";
-echo "</ul>";
-
-echo "<h2>📍 Position</h2><ul>";
-echo "<li>Latitude : " . $response['drive_state']['latitude'] . "</li>";
-echo "<li>Longitude : " . $response['drive_state']['longitude'] . "</li>";
-echo "<li>Vitesse : " . ($response['drive_state']['speed'] ?? 'N/A') . " km/h</li>";
-echo "</ul>";
+echo "<h2>✅ Véhicule(s) trouvés :</h2><pre>";
+print_r($vehicles);
+echo "</pre>";
