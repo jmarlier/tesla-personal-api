@@ -7,7 +7,7 @@ $fields = http_build_query([
     'client_id' => $_ENV['TESLA_CLIENT_ID'],
     'client_secret' => $_ENV['TESLA_CLIENT_SECRET'],
     'scope' => 'openid vehicle_device_data vehicle_cmds vehicle_charging_cmds',
-    'audience' => 'https://fleet-api.prd.eu.vn.cloud.tesla.com'
+    'audience' => $_ENV['TESLA_AUDIENCE'],
 ]);
 
 $ch = curl_init('https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token');
