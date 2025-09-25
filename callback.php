@@ -1,8 +1,15 @@
 <?php
-$client_id = 'TON_CLIENT_ID';
-$client_secret = 'TON_CLIENT_SECRET';
-$redirect_uri = 'https://tondomaine.com/callback.php';
-$audience = 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+
+require __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+session_start();
+
+$clientId     = $_ENV['TESLA_CLIENT_ID'];
+$clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
+$redirectUri  = $_ENV['TESLA_REDIRECT_URI'];
+$audience = $_ENV['TESLA_AUDIENCE'];
 
 $code = $_GET['code'] ?? null;
 
@@ -12,11 +19,11 @@ if (!$code) {
 
 $data = http_build_query([
     'grant_type' => 'authorization_code',
-    'client_id' => $client_id,
-    'client_secret' => $client_secret,
+    'client_id' => $clientId,
+    'client_secret' => $clientSecret,
     'code' => $code,
     'audience' => $audience,
-    'redirect_uri' => $redirect_uri,
+    'redirect_uri' => $redirectUri,
 ]);
 
 $ch = curl_init('https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token');
