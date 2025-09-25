@@ -14,12 +14,11 @@ $state = bin2hex(random_bytes(16));
 // Anti-CSRF
 $_SESSION['oauth_state'] = $state;
 
-// PKCE
-$codeVerifier = bin2hex(random_bytes(32));
+$redirectUriEncoded = urlencode($redirectUri);
 
 $url = "https://auth.tesla.com/oauth2/v3/authorize?" .
     "client_id={$clientId}&" .
-    "redirect_uri={$redirectUri}&" .
+    "redirect_uri={$redirectUriEncoded}&" .
     "response_type=code&" .
     "scope={$scope}&" .
     "state={$state}&" .
