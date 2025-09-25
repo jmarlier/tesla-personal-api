@@ -8,7 +8,7 @@ if (!isset($_SESSION['access_token'])) {
 
 $accessToken = $_SESSION['access_token'];
 
-$ch = curl_init('https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/vehicles');
+$ch = curl_init('https://fleet-api.prd.eu.vn.cloud.tesla.com/api/1/vehicles');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Authorization: Bearer ' . $accessToken
