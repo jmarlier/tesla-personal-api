@@ -11,7 +11,8 @@ $accessToken = $_SESSION['access_token'];
 $ch = curl_init('https://owner-api.teslamotors.com/api/1/vehicles');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Authorization: Bearer ' . $accessToken
+    'Authorization: Bearer ' . $accessToken,
+    'Content-Type: application/json'
 ]);
 
 $response = curl_exec($ch);
