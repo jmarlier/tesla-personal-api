@@ -49,5 +49,27 @@ if (!isset($tokens['access_token'])) {
 $_SESSION['access_token'] = $tokens['access_token'];
 $_SESSION['refresh_token'] = $tokens['refresh_token'];
 
-echo "Authentification réussie. Tokens obtenus.";
+file_put_contents('tokens.json', json_encode([
+    'access_token' => $tokens['access_token'],
+    'refresh_token' => $tokens['refresh_token'],
+    'expires_in' => $tokens['expires_in'],
+    'created_at' => time()
+]));
+
+// Affichage pour vérification
+echo "<h2>✅ Authentification réussie</h2>";
+echo "<p><strong>Access Token :</strong></p>";
+echo "<pre>" . htmlspecialchars($tokens['access_token']) . "</pre>";
+
+echo "<p><strong>Refresh Token :</strong></p>";
+echo "<pre>" . htmlspecialchars($tokens['refresh_token']) . "</pre>";
+
+if (isset($tokens['expires_in'])) {
+    echo "<p><strong>Expire dans :</strong> " . htmlspecialchars($tokens['expires_in']) . " secondes</p>";
+}
+
+if (isset($tokens['id_token'])) {
+    echo "<p><strong>ID Token (JWT) :</strong></p>";
+    echo "<pre>" . htmlspecialchars($tokens['id_token']) . "</pre>";
+}
 ?>
