@@ -8,27 +8,23 @@ session_start();
 
 $clientId    = $_ENV['TESLA_CLIENT_ID'];
 $redirectUri = $_ENV['TESLA_REDIRECT_URI'];
-$scope       = 'openid offline_access';
+$scope = urlencode('openid offline_access vehicle_device_data vehicle_cmds vehicle_charging_cmds');
+$state = bin2hex(random_bytes(16));
 
 // Anti-CSRF
-$state = bin2hex(random_bytes(8));
 $_SESSION['oauth_state'] = $state;
 
 // PKCE
 $codeVerifier = bin2hex(random_bytes(32));
-$_SESSION['code_verifier'] = $codeVerifier;
-$codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
 
-// Redirection vers Tesla OAuth
-$authUrl = 'https://auth.tesla.com/oauth2/v3/authorize?' . http_build_query([
-    'response_type'         => 'code',
-    'client_id'             => $clientId,
-    'redirect_uri'          => $redirectUri,
-    'scope'                 => $scope,
-    'state'                 => $state,
-    'code_challenge'        => $codeChallenge,
-    'code_challenge_method' => 'S256',
-]);
+$url = "https://auth.tesla.com/oauth2/v3/authorize?" .
+    "client_id={$clientId}&" .
+    "redirect_uri={$redirectUri}&" .
+    "response_type=code&" .
+    "scope={$scope}&" .
+    "state={$state}&" .
+    "prompt=login";
 
-header("Location: $authUrl");
+header("Location: $url");
 exit;
+?>
