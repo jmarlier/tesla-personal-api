@@ -50,4 +50,14 @@ if ($httpCode === 200) {
     echo "<p>❌ Erreur :</p>";
     echo "<pre>" . htmlspecialchars($response) . "</pre>";
 }
+
+$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$responseHeaders = substr($response, 0, $headerSize);
+$responseBody = substr($response, $headerSize);
+
+// Recherche du txid dans les headers
+preg_match('/x-txid:\s*(.+)/i', $responseHeaders, $matches);
+$txid = $matches[1] ?? 'non trouvé';
+
+echo "<p><strong>TXID :</strong> " . htmlspecialchars($txid) . "</p>";
 ?>
