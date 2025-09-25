@@ -1,36 +1,27 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
+session_start();
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Lecture du token partenaire
-$tokenPath = __DIR__ . '/partner.json';
-if (!file_exists($tokenPath)) {
-    exit("❌ Aucun fichier partner.json trouvé");
+// Vérifie que le token est bien en session
+if (!isset($_SESSION['access_token'])) {
+    die('❌ Aucun token trouvé. Veuillez vous connecter via login.php');
 }
 
-$tokens = json_decode(file_get_contents($tokenPath), true);
-$accessToken = $tokens['access_token'] ?? null;
+$accessToken = $_SESSION['access_token'];
 
-if (!$accessToken) {
-    exit("❌ Aucun token d'accès partenaire trouvé");
-}
-
-// 🔥 Requête vers /vehicles (en NA, pour partenaires)
-echo "<h2>🚗 /vehicles (via Partner Token)</h2><pre>";
-
-$vehiclesCurl = curl_init('https://owner-api.teslamotors.com/api/1/vehicles');
-curl_setopt_array($vehiclesCurl, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        'Authorization: Bearer ' . $accessToken,
-        'Content-Type: application/json'
-    ]
+$ch = curl_init('https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/vehicles');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $accessToken
 ]);
-$vehiclesResponse = curl_exec($vehiclesCurl);
-$vehiclesHttpCode = curl_getinfo($vehiclesCurl, CURLINFO_HTTP_CODE);
-curl_close($vehiclesCurl);
 
-echo "HTTP Status: $vehiclesHttpCode\n";
-echo $vehiclesResponse . "</pre>";
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    $vehicles = json_decode($response, true);
+    echo "<h2>🚗 Liste des véhicules :</h2>";
+    echo "<pre>" . htmlspecialchars(json_encode($vehicles, JSON_PRETTY_PRINT)) . "</pre>";
+} else {
+    echo "❌ Erreur API (HTTP $httpCode) :<br><pre>$response</pre>";
+}
