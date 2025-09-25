@@ -6,7 +6,7 @@ $dotenv->load();
 // Chargement des identifiants
 $clientId     = $_ENV['TESLA_CLIENT_ID'];
 $clientSecret = $_ENV['TESLA_CLIENT_SECRET'];
-$audience     = 'https://fleet-api.prd.na.vn.cloud.tesla.com';
+$audience     = $_ENV['TESLA_AUDIENCE'];
 
 // Requête de token partenaire
 $fields = http_build_query([
