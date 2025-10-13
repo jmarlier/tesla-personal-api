@@ -1,343 +1,433 @@
-# 🚗 Tesla Fleet API - Authentification OAuth 2.0
+# 🚗 Tesla Fleet API - Application Complète
 
-Application PHP sécurisée pour s'authentifier auprès de l'API Tesla Fleet en utilisant OAuth 2.0 avec des JWT signés ES256 (ECDSA).
+> Application PHP moderne pour tester et utiliser l'API Tesla Fleet avec un dashboard interactif complet
 
-## 📋 Table des matières
+[![PHP](https://img.shields.io/badge/PHP-8.0%2B-777BB4.svg)](https://www.php.net/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- [Fonctionnalités](#-fonctionnalités)
-- [Architecture sécurisée](#-architecture-sécurisée)
-- [Prérequis](#-prérequis)
-- [Installation](#-installation)
-- [Configuration](#️-configuration)
-- [Utilisation](#-utilisation)
-- [Sécurité](#-sécurité)
-- [API Tesla Fleet](#-api-tesla-fleet)
+---
 
-## ✨ Fonctionnalités
+## 🎯 Qu'est-ce que c'est ?
 
-- ✅ Génération de JWT avec signature ES256 (ECDSA + SHA-256)
-- ✅ Authentification OAuth 2.0 client credentials flow
-- ✅ Stockage sécurisé de la clé privée (hors du dossier public)
-- ✅ Configuration via fichier `.env`
-- ✅ Interface web moderne et responsive
-- ✅ Script CLI pour tests rapides
-- ✅ Classe PHP réutilisable et orientée objet
+Une **application web complète** qui permet de :
 
-## 🏗 Architecture sécurisée
+✅ **S'authentifier** avec Tesla OAuth 2.0  
+✅ **Lister vos véhicules** Tesla automatiquement  
+✅ **Consulter les données en temps réel** (batterie, charge, climat, localisation, etc.)  
+✅ **Envoyer des commandes** (climatisation, verrouillage, charge, etc.)  
+✅ **Débugger facilement** avec des logs complets  
+✅ **Utiliser une interface moderne** avec thème sombre professionnel
 
-```
-tesla-app/
-├── public/                    # ← Document root du serveur web
-│   ├── index.php             # Interface web principale
-│   └── get-token.php         # Endpoint API pour obtenir le token
-│
-├── config/                    # ← Configuration sensible (HORS du public)
-│   └── private-key.pem       # ← Clé privée EC (secp256r1)
-│
-├── src/                       # ← Code métier
-│   └── TeslaAuth.php         # Classe d'authentification
-│
-├── .env                       # ← Variables d'environnement (NON versionné)
-├── .env.example              # ← Template de configuration (versionné)
-├── .gitignore                # ← Protection des fichiers sensibles
-├── cli-get-token.php         # ← Script CLI
-├── composer.json             # ← Dépendances PHP
-└── README.md                 # ← Ce fichier
-```
+---
 
-**🔒 Principe de sécurité :** Seul le dossier `public/` doit être exposé au web. Les fichiers sensibles (clés, `.env`) sont stockés en dehors.
+## 🚀 Démarrage rapide (5 minutes)
 
-## 🔧 Prérequis
-
-- PHP 8.0 ou supérieur
-- Composer
-- Extension PHP `curl`
-- Extension PHP `openssl`
-- Une clé privée EC au format PEM (courbe secp256r1 / P-256)
-- Un compte développeur Tesla avec une application enregistrée
-
-## 📦 Installation
-
-### 1. Cloner le projet
+### 1️⃣ Installation
 
 ```bash
+# Cloner le projet
 git clone <url-du-repo>
 cd tesla-app
-```
 
-### 2. Installer les dépendances
-
-```bash
+# Installer les dépendances
 composer install
 ```
 
-### 3. Créer la structure de dossiers
+### 2️⃣ Configuration
 
-```bash
-mkdir -p config public
-```
-
-### 4. Configurer l'environnement
-
-```bash
-# Copier le template de configuration
-cp .env.example .env
-
-# Éditer .env avec vos valeurs
-nano .env
-```
-
-### 5. Installer votre clé privée
-
-```bash
-# Copier votre clé privée dans le dossier config
-cp /chemin/vers/votre/private-key.pem config/private-key.pem
-
-# Sécuriser les permissions
-chmod 600 config/private-key.pem
-```
-
-## ⚙️ Configuration
-
-Éditez le fichier `.env` avec vos informations :
+Créez un fichier `.env` avec vos identifiants Tesla :
 
 ```env
-# Client ID de votre application Tesla
-TESLA_CLIENT_ID=votre-client-id-ici
-
-# Chemin vers la clé privée EC (secp256r1) au format PEM
-TESLA_PRIVATE_KEY_PATH=config/private-key.pem
-
-# URL de l'API Tesla Fleet
-TESLA_FLEET_API_URL=https://fleet-api.prd.na.vn.cloud.tesla.com
-
-# Scopes demandés (séparés par des espaces)
-TESLA_SCOPES=fleet_api:vehicles:read fleet_api:vehicles:write
+TESLA_CLIENT_ID=your_client_id
+TESLA_FLEET_API_URL=https://fleet-api.prd.eu.vn.cloud.tesla.com
+TESLA_REDIRECT_URI=https://your-domain.com/callback.php
+TESLA_USER_SCOPES=openid offline_access vehicle_device_data vehicle_cmds vehicle_charging_cmds
 ```
 
-### Obtenir un Client ID Tesla
-
-1. Créez un compte sur [developer.tesla.com](https://developer.tesla.com)
-2. Créez une nouvelle application
-3. Générez une paire de clés EC (secp256r1)
-4. Récupérez votre Client ID
-
-### Générer une clé EC secp256r1
+### 3️⃣ Lancement
 
 ```bash
-# Générer la clé privée
-openssl ecparam -name prime256v1 -genkey -noout -out private-key.pem
+# Test de configuration
+php test-dashboard.php
 
-# Générer la clé publique correspondante
-openssl ec -in private-key.pem -pubout -out public-key.pem
+# Lancer le serveur
+./run-dashboard.sh    # macOS/Linux
+# OU
+run-dashboard.bat     # Windows
+
+# Ouvrir dans le navigateur
+http://localhost:8000/setup-dashboard.php
 ```
 
-⚠️ **Important :** Uploadez uniquement la clé **publique** sur le portail Tesla Developer.
+**C'est tout ! 🎉**
 
-## 🚀 Utilisation
+---
 
-### Via la ligne de commande (CLI)
+## 📱 Dashboard Moderne
+
+L'application inclut un **dashboard complet** avec 5 étapes interactives :
+
+### Étape 1 : 🔐 Authentification
+
+- Coller un token directement OU
+- Utiliser le flow OAuth complet
+- Validation automatique en temps réel
+
+### Étape 2 : 🚗 Véhicules
+
+- Liste de tous vos véhicules Tesla
+- Statut en direct (online/asleep/offline)
+- Sélection interactive
+
+### Étape 3 : 📊 Données du véhicule
+
+- 🔋 Niveau de batterie
+- 🔌 État de charge
+- ❄️ Climatisation
+- 🚪 Verrouillage des portes
+- 📍 Localisation GPS
+- 🏁 Autonomie restante
+- ✅ Rafraîchissement auto (60s)
+
+### Étape 4 : 🎮 Commandes
+
+- ❄️ Climatisation (start/stop)
+- 🔒 Verrouillage/déverrouillage
+- 🔌 Charge (start/stop)
+- 💡 Flash des lumières
+- 📢 Klaxon
+- Et plus encore...
+
+### Étape 5 : 📋 Logs & Debug
+
+- Historique complet de toutes les actions
+- Classification par type (success/error/info)
+- Timestamps précis
+
+---
+
+## 📚 Documentation
+
+### 🎯 Pour démarrer
+
+| Document                                             | Description                      | Temps  |
+| ---------------------------------------------------- | -------------------------------- | ------ |
+| **[START_HERE.md](START_HERE.md)** ⭐                | **Commencez ici** - Guide rapide | 5 min  |
+| [README_DASHBOARD.md](README_DASHBOARD.md)           | Vue d'ensemble du dashboard      | 5 min  |
+| [QUICK_START_DASHBOARD.md](QUICK_START_DASHBOARD.md) | Guide de démarrage détaillé      | 15 min |
+
+### 📖 Documentation complète
+
+| Document                                                 | Contenu                    |
+| -------------------------------------------------------- | -------------------------- |
+| [DASHBOARD_INDEX.md](DASHBOARD_INDEX.md)                 | Index de navigation        |
+| [SETUP_DASHBOARD.md](SETUP_DASHBOARD.md)                 | Documentation technique    |
+| [DASHBOARD_SUMMARY.md](DASHBOARD_SUMMARY.md)             | Résumé de création         |
+| [DASHBOARD_PREVIEW.md](DASHBOARD_PREVIEW.md)             | Aperçu visuel              |
+| [API_EXAMPLES.md](API_EXAMPLES.md)                       | Exemples d'utilisation API |
+| [PROJECT_FILES_INVENTORY.md](PROJECT_FILES_INVENTORY.md) | Inventaire des fichiers    |
+
+---
+
+## 📂 Structure du projet
+
+```
+tesla-app/
+│
+├── 📱 DASHBOARD PRINCIPAL
+│   ├── setup-dashboard.php              ⭐ Dashboard complet
+│   ├── START_HERE.md                    🎯 Commencez ici
+│   ├── test-dashboard.php               🧪 Test de config
+│   └── run-dashboard.sh/bat             🚀 Scripts de lancement
+│
+├── 🔌 API ENDPOINTS
+│   ├── api/auth.php                     Authentification
+│   ├── api/vehicles.php                 Liste véhicules
+│   ├── api/data.php                     Données véhicule
+│   ├── api/command.php                  Commandes
+│   ├── api/check-session.php            Vérif. session
+│   └── api/reset.php                    Reset session
+│
+├── 🔑 AUTHENTIFICATION OAUTH
+│   ├── login.php                        Page de login
+│   ├── callback.php                     Callback OAuth
+│   └── logout.php                       Déconnexion
+│
+├── 💻 CODE SOURCE
+│   └── src/TeslaAuth.php               Classe d'authentification
+│
+├── ⚙️ CONFIGURATION
+│   ├── .env                            Variables d'environnement
+│   ├── composer.json                   Dépendances
+│   └── .htaccess                       Config Apache
+│
+└── 📚 DOCUMENTATION
+    ├── README.md                       Ce fichier
+    ├── START_HERE.md                   Point de départ
+    └── (voir section Documentation)
+```
+
+---
+
+## ✨ Fonctionnalités principales
+
+### 🎨 Interface moderne
+
+- Thème sombre professionnel
+- Design responsive (desktop, tablet, mobile)
+- Timeline des étapes avec indicateurs ✅/❌/⚠️
+- Notifications en temps réel
+- Barre de progression globale
+
+### 🔐 Sécurité
+
+- Authentification OAuth 2.0
+- Sessions PHP sécurisées
+- Validation des tokens
+- Protection CSRF
+- HTTPS recommandé en production
+
+### 🧪 Tests & Debug
+
+- Script de test de configuration
+- Logs complets de toutes les requêtes
+- Gestion d'erreurs détaillée
+- Interface de debug intégrée
+
+### 🔌 API complète
+
+- 6 endpoints RESTful
+- Authentification
+- Gestion des véhicules
+- Récupération de données
+- Envoi de commandes
+- Gestion de session
+
+---
+
+## 🔧 Configuration requise
+
+### Serveur
+
+- **PHP 8.0+** avec extensions :
+  - curl
+  - json
+  - session
+  - mbstring
+
+### Composer
+
+- `vlucas/phpdotenv` - Variables d'environnement
+- `firebase/php-jwt` - JWT (optionnel)
+
+### Tesla Developer
+
+- Compte développeur Tesla
+- Client ID configuré
+- Redirect URI enregistré
+- Scopes appropriés
+
+---
+
+## 🎮 Utilisation
+
+### Via le Dashboard Web (Recommandé)
+
+1. **Test de configuration** :
+
+   ```bash
+   php test-dashboard.php
+   ```
+
+2. **Lancement** :
+
+   ```bash
+   ./run-dashboard.sh
+   ```
+
+3. **Accès** :
+
+   ```
+   http://localhost:8000/setup-dashboard.php
+   ```
+
+4. **Suivre les 5 étapes** dans le dashboard
+
+### Via CLI
 
 ```bash
+# Obtenir un token en ligne de commande
 php cli-get-token.php
+
+# Test simple
+php test-simple.php
 ```
 
-Sortie attendue :
+### Via API directement
 
-```
-🚗 Tesla Fleet API - Authentification OAuth 2.0
-==================================================
+```bash
+# Authentification
+curl -X POST http://localhost:8000/api/auth.php \
+  -H "Content-Type: application/json" \
+  -d '{"access_token":"YOUR_TOKEN"}'
 
-📋 Client ID: c9c40292-ddb3-4a87-9cc0-5a0193081024
-🔐 Clé privée: config/private-key.pem
+# Liste des véhicules
+curl http://localhost:8000/api/vehicles.php
 
-⏳ Génération du JWT et requête à l'API...
+# Données d'un véhicule
+curl http://localhost:8000/api/data.php?vehicle_id=123456
 
-✅ Access token obtenu avec succès!
-
-🔑 Access Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6I...
-📝 Type: bearer
-⏱️  Expire dans: 28800 secondes
-```
-
-### Via le navigateur (Web)
-
-1. Configurez votre serveur web (Apache/Nginx) avec `public/` comme document root
-2. Accédez à `http://localhost/` ou votre domaine
-3. Cliquez sur "🔑 Obtenir un Access Token"
-4. Le token s'affichera dans une interface moderne
-
-### Configuration serveur web
-
-#### Apache (`.htaccess` dans `public/`)
-
-```apache
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [QSA,L]
-</IfModule>
+# Envoyer une commande
+curl -X POST http://localhost:8000/api/command.php \
+  -H "Content-Type: application/json" \
+  -d '{"vehicle_id":123456,"command":"flash_lights"}'
 ```
 
-#### Nginx
+Plus d'exemples dans [API_EXAMPLES.md](API_EXAMPLES.md)
 
-```nginx
-server {
-    listen 80;
-    server_name tesla-app.local;
-    root /chemin/vers/tesla-app/public;
+---
 
-    index index.php;
+## 🐛 Dépannage
 
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
+### Token invalide
 
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    }
+**Solution :** Utilisez le bouton "Se connecter avec Tesla OAuth" dans le dashboard
 
-    location ~ /\.env {
-        deny all;
-    }
-}
+### Aucun véhicule trouvé
+
+**Solution :** Vérifiez que vos scopes incluent `vehicle_device_data`
+
+### Véhicule en veille (408)
+
+**Solution :** Attendez 30-60 secondes et réessayez
+
+### Erreur de connexion
+
+**Solution :** Vérifiez `TESLA_FLEET_API_URL` dans `.env`
+
+👉 **Plus de solutions dans [QUICK_START_DASHBOARD.md](QUICK_START_DASHBOARD.md)**
+
+---
+
+## 📊 Statistiques
+
+```
+📄 Fichiers créés       : 60+
+💻 Code PHP             : ~3000 lignes
+📚 Documentation        : ~5000 lignes
+🔌 Endpoints API        : 6
+🎯 Étapes dashboard     : 5
+⚡ Commandes testables  : 8+
 ```
 
-### Utilisation programmatique
-
-```php
-<?php
-
-require 'vendor/autoload.php';
-
-use TeslaApp\TeslaAuth;
-use Dotenv\Dotenv;
-
-// Charger la configuration
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Créer une instance depuis l'environnement
-$auth = TeslaAuth::fromEnv();
-
-// Obtenir un access token
-try {
-    $tokenData = $auth->getAccessToken();
-
-    echo "Access Token: " . $tokenData['access_token'];
-    echo "\nExpire dans: " . $tokenData['expires_in'] . " secondes";
-
-} catch (Exception $e) {
-    echo "Erreur: " . $e->getMessage();
-}
-```
+---
 
 ## 🔐 Sécurité
 
-### ✅ Bonnes pratiques implémentées
+### En développement
 
-1. **Clé privée hors du dossier public** : Stockée dans `config/` qui n'est jamais exposé au web
-2. **`.env` non versionné** : Le `.gitignore` empêche de commit les secrets
-3. **Permissions strictes** : `chmod 600` sur la clé privée
-4. **Pas de secrets en dur** : Tout est dans `.env`
-5. **Validation des entrées** : Exceptions claires en cas d'erreur
-6. **HTTPS recommandé** : Pour la production, toujours utiliser HTTPS
+- ✅ HTTP localhost acceptable
+- ✅ Sessions PHP
 
-### ⚠️ Checklist de sécurité
+### En production
 
-- [ ] La clé privée est dans `config/` et jamais dans `public/`
-- [ ] Le fichier `.env` n'est pas versionné
-- [ ] Les permissions de `config/private-key.pem` sont 600
-- [ ] Le serveur web expose uniquement `public/`
-- [ ] HTTPS est activé en production
-- [ ] Les logs ne contiennent pas de secrets
+- ⚠️ **HTTPS obligatoire**
+- ⚠️ `.env` hors du webroot
+- ⚠️ Sessions sécurisées :
+  ```php
+  session.cookie_secure = 1
+  session.cookie_httponly = 1
+  session.cookie_samesite = "Strict"
+  ```
 
-### 🚨 Fichiers à ne JAMAIS versionner
+### Fichiers à ne JAMAIS versionner
 
 ```gitignore
 .env
 *.pem
 *.key
 /config/private-key.pem
+/var/tokens.json
 ```
+
+---
 
 ## 🌐 API Tesla Fleet
 
-### Endpoints disponibles
-
-Une fois authentifié, vous pouvez utiliser l'access token pour appeler les endpoints Tesla :
-
-```bash
-# Lister les véhicules
-curl -X GET "https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/vehicles" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Obtenir les infos d'un véhicule
-curl -X GET "https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/vehicles/{id}" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Envoyer une commande
-curl -X POST "https://fleet-api.prd.na.vn.cloud.tesla.com/api/1/vehicles/{id}/command/wake_up" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
 ### Documentation officielle
 
-- [Tesla Fleet API Docs](https://developer.tesla.com/docs/fleet-api)
+- [Tesla Fleet API](https://developer.tesla.com/docs/fleet-api)
 - [OAuth 2.0 Flow](https://developer.tesla.com/docs/fleet-api/authentication/oauth)
-- [Available Endpoints](https://developer.tesla.com/docs/fleet-api/endpoints)
+- [GitHub Vehicle Command](https://github.com/teslamotors/vehicle-command)
 
-## 🧪 Dépannage
-
-### Erreur : "Clé privée introuvable"
+### Endpoints disponibles
 
 ```bash
-# Vérifier que la clé existe
-ls -la config/private-key.pem
+# Liste véhicules
+GET /api/1/vehicles
 
-# Vérifier le chemin dans .env
-cat .env | grep TESLA_PRIVATE_KEY_PATH
+# Données véhicule
+GET /api/1/vehicles/{id}/vehicle_data
+
+# Commandes
+POST /api/1/vehicles/{id}/command/{command_name}
 ```
 
-### Erreur : "Variables d'environnement manquantes"
-
-```bash
-# Vérifier que .env existe et contient les bonnes valeurs
-cat .env
-```
-
-### Erreur HTTP 401 Unauthorized
-
-- Vérifiez que votre Client ID est correct
-- Assurez-vous que la clé privée correspond à la clé publique uploadée sur Tesla
-- Vérifiez que votre application Tesla est bien configurée
-
-### Erreur HTTP 403 Forbidden
-
-- Vérifiez les scopes demandés dans `.env`
-- Assurez-vous que votre application a les permissions nécessaires
+---
 
 ## 📝 Licence
 
 Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
+---
+
 ## 🤝 Contribution
 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou un pull request.
+Les contributions sont les bienvenues !
 
-## 📧 Support
+1. Fork le projet
+2. Créez une branche (`git checkout -b feature/amélioration`)
+3. Commit vos changements (`git commit -m 'Ajout fonctionnalité'`)
+4. Push sur la branche (`git push origin feature/amélioration`)
+5. Ouvrez une Pull Request
 
-Pour toute question ou problème :
+---
 
-- Consultez la [documentation Tesla](https://developer.tesla.com)
-- Ouvrez une issue sur GitHub
-- Contactez le support Tesla Developer
+## 🎉 Démarrage rapide
+
+**Pour commencer immédiatement :**
+
+```bash
+# 1. Installer
+composer install
+
+# 2. Configurer .env
+cp .env.example .env
+nano .env
+
+# 3. Tester
+php test-dashboard.php
+
+# 4. Lancer
+./run-dashboard.sh
+
+# 5. Ouvrir
+open http://localhost:8000/setup-dashboard.php
+```
+
+**Ensuite, lisez [START_HERE.md](START_HERE.md) ! 🚀**
+
+---
+
+## 📞 Support
+
+- 📖 **Documentation** : Voir section Documentation ci-dessus
+- 🐛 **Issues** : Ouvrez une issue sur GitHub
+- 💬 **Questions** : Consultez [QUICK_START_DASHBOARD.md](QUICK_START_DASHBOARD.md)
+- 🌐 **Tesla Support** : [developer.tesla.com](https://developer.tesla.com)
 
 ---
 
 **⚡ Propulsé par Tesla Fleet API**
+
+_Créé avec ❤️ pour faciliter l'intégration de l'API Tesla_
