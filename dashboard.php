@@ -5,18 +5,18 @@
  * Affiche les véhicules et permet d'envoyer des commandes
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 session_start();
 
 // Vérifier l'authentification
 if (!isset($_SESSION['access_token'])) {
-    header('Location: /login.php');
+    header('Location: login.php');
     exit;
 }
 
@@ -175,7 +175,7 @@ $vehicles = getVehicles($apiUrl, $accessToken);
                 <h1>🚗 Mes Véhicules Tesla</h1>
                 <p style="color: #666; margin-top: 5px;">Tesla Fleet API Dashboard</p>
             </div>
-            <a href="/logout.php" class="logout-btn">Déconnexion</a>
+            <a href="logout.php" class="logout-btn">Déconnexion</a>
         </div>
 
         <?php if (empty($vehicles)): ?>

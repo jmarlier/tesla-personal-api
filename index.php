@@ -4,12 +4,12 @@
  * Point d'entrée principal de l'application Tesla Fleet API
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 use Dotenv\Dotenv;
 
 // Charger les variables d'environnement
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 ?>
@@ -171,7 +171,7 @@ $dotenv->load();
             🔑 Obtenir un Partner Token (JWT)
         </button>
 
-        <a href="/public/login.php" class="button" style="display: block; text-align: center; text-decoration: none; margin-top: 10px;">
+        <a href="login.php" class="button" style="display: block; text-align: center; text-decoration: none; margin-top: 10px;">
             👤 Se connecter avec Tesla (OAuth)
         </a>
 

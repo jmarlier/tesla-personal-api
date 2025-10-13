@@ -18,11 +18,11 @@ if (isset($_COOKIE[session_name()])) {
 session_destroy();
 
 // Optionnel: Supprimer le fichier de tokens
-$tokenFile = __DIR__ . '/../var/tokens.json';
+$tokenFile = __DIR__ . '/var/tokens.json';
 if (file_exists($tokenFile)) {
     unlink($tokenFile);
 }
 
 // Rediriger vers l'accueil
-header('Location: /');
+header('Location: index.php');
 exit;

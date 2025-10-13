@@ -1,0 +1,39 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Autoriser .well-known (pour la clé publique Tesla)
+    RewriteCond %{REQUEST_URI} ^/\.well-known/
+    RewriteRule ^ - [L]
+    
+    # Rediriger vers index.php si le fichier n'existe pas
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Protection des fichiers sensibles
+<FilesMatch "\.(env|pem|key|json)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquer l'accès aux dossiers de configuration
+<DirectoryMatch "^/.*(config|src|vendor|var)">
+    Require all denied
+</DirectoryMatch>
+
+# Autoriser .well-known
+<DirectoryMatch "^/\.well-known">
+    Require all granted
+</DirectoryMatch>
+
+# En-têtes de sécurité
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Index par défaut
+DirectoryIndex index.php
+

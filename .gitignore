@@ -12,6 +12,7 @@ deploy.sh
 # Fichiers système
 .DS_Store
 *.log
+error_log
 
 # Configuration sensible
 /config/private-key.pem
@@ -22,3 +23,11 @@ deploy.sh
 /var/
 tokens.json
 partner.json
+user_tokens.json
+debug.json
+
+# Dossier public vide (structure legacy)
+/public/
+
+# Well-known (généré sur le serveur)
+/.well-known/appspecific/*.pem

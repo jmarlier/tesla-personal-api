@@ -6,13 +6,13 @@
  * Ce fichier peut être appelé via le web ou en ligne de commande
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 use TeslaApp\TeslaAuth;
 use Dotenv\Dotenv;
 
 // Charger les variables d'environnement depuis .env
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 // En-têtes pour JSON si appelé via le web
