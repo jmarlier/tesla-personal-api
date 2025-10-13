@@ -171,7 +171,7 @@ $dotenv->load();
             🔑 Obtenir un Partner Token (JWT)
         </button>
 
-        <a href="/login.php" class="button" style="display: block; text-align: center; text-decoration: none; margin-top: 10px;">
+        <a href="/public/login.php" class="button" style="display: block; text-align: center; text-decoration: none; margin-top: 10px;">
             👤 Se connecter avec Tesla (OAuth)
         </a>
 
@@ -193,7 +193,7 @@ $dotenv->load();
             responseDiv.classList.remove('show');
 
             try {
-                const response = await fetch('get-token.php');
+                const response = await fetch('/public/get-token.php');
                 const data = await response.json();
 
                 // Cacher le loading
