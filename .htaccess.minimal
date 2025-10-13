@@ -1,0 +1,21 @@
+# Configuration minimale (si .htaccess normal pose problème)
+
+# Protection des fichiers sensibles
+<Files ".env">
+    Order deny,allow
+    Deny from all
+</Files>
+
+<Files "*.pem">
+    Order deny,allow
+    Deny from all
+</Files>
+
+<Files "*.key">
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Index par défaut
+DirectoryIndex index.php
+
