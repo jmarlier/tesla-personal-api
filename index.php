@@ -193,7 +193,7 @@ $dotenv->load();
             responseDiv.classList.remove('show');
 
             try {
-                const response = await fetch('/public/get-token.php');
+                const response = await fetch('get-token.php');
                 const data = await response.json();
 
                 // Cacher le loading
