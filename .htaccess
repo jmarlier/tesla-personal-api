@@ -1,19 +1,32 @@
-# Protection des fichiers sensibles (compatible O2Switch)
-<FilesMatch "\.(env|pem|key)$">
-    Order deny,allow
-    Deny from all
-</FilesMatch>
-
-# Bloquer l'accès aux dossiers de configuration
-RedirectMatch 404 ^/(config|src|vendor|var)/
-
 # Index par défaut
+
 DirectoryIndex index.php
 
-# Autoriser .well-known (pour Tesla)
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{REQUEST_URI} ^/\.well-known/
-    RewriteRule ^ - [L]
-</IfModule>
+# Bloquer l'accès aux dossiers de configuration (sauf .well-known)
 
+RedirectMatch 404 ^/(config|src|vendor|var)/
+
+# Protection des fichiers sensibles
+
+# IMPORTANT: Autoriser .well-known/ pour Tesla (ordre important!)
+
+<FilesMatch "^\.well-known/">
+Order allow,deny
+Allow from all
+</FilesMatch>
+
+# Bloquer les autres .env, .pem, .key (sauf dans .well-known)
+
+<FilesMatch "\.(env)$">
+Order deny,allow
+Deny from all
+</FilesMatch>
+
+# Bloquer .pem et .key SAUF dans .well-known
+
+SetEnvIf Request_URI "^/\.well-known/" allow_pem
+<FilesMatch "\.(pem|key)$">
+Order deny,allow
+Deny from all
+Allow from env=allow_pem
+</FilesMatch>
