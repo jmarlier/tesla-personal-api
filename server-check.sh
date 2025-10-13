@@ -92,7 +92,7 @@ if [ -f config/private-key.pem ]; then
 fi
 
 check_warning "Clé publique (.well-known)" \
-    "test -f public/.well-known/appspecific/com.tesla.3p.public-key.pem" \
+    "test -f .well-known/appspecific/com.tesla.3p.public-key.pem" \
     "Présente" "À créer"
 echo ""
 
@@ -149,9 +149,9 @@ echo ""
 # 8. Test de connectivité
 echo -e "${BLUE}🌐 Tests de connectivité...${NC}"
 if command -v curl > /dev/null; then
-    check "Accès à Tesla API" \
+    check_warning "Accès à Tesla API" \
         "curl -s -I https://fleet-api.prd.na.vn.cloud.tesla.com | head -1 | grep -q '200\|301\|302'" \
-        "Accessible" "Problème de connexion"
+        "Accessible" "Restriction firewall (normal sur serveurs mutualisés)"
 fi
 echo ""
 

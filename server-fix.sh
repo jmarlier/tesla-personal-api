@@ -34,8 +34,9 @@ chmod 755 var
 echo "Require all denied" > var/.htaccess
 echo "✅ Dossier var/ créé et protégé"
 
-# Créer .well-known
-mkdir -p public/.well-known/appspecific
+# Créer .well-known (à la racine, pas dans public/)
+mkdir -p .well-known/appspecific
+chmod 755 .well-known .well-known/appspecific
 echo "✅ Dossier .well-known créé"
 
 # Corriger permissions .env
@@ -67,10 +68,10 @@ cd ~/app.jeromemarlier.com
 
 if [ -f config/private-key.pem ]; then
     openssl ec -in config/private-key.pem -pubout \
-        -out public/.well-known/appspecific/com.tesla.3p.public-key.pem 2>/dev/null
+        -out .well-known/appspecific/com.tesla.3p.public-key.pem 2>/dev/null
     
-    chmod 644 public/.well-known/appspecific/com.tesla.3p.public-key.pem
-    echo "✅ Clé publique créée"
+    chmod 644 .well-known/appspecific/com.tesla.3p.public-key.pem
+    echo "✅ Clé publique créée : .well-known/appspecific/com.tesla.3p.public-key.pem"
 else
     echo "⚠️  Clé privée manquante, impossible de créer la clé publique"
 fi
