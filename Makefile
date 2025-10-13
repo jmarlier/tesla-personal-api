@@ -198,6 +198,29 @@ deploy-server: ## Push uniquement sur Cocotier
 	git push cocotier master
 	@echo "$(GREEN)✅ Déploiement Cocotier terminé!$(NC)"
 
+server-check: ## Vérifier la configuration du serveur
+	@echo "$(BLUE)🔍 Copie et exécution du script de vérification...$(NC)"
+	@scp server-check.sh duda6304@cocotier.o2switch.net:~/app.jeromemarlier.com/
+	@ssh duda6304@cocotier.o2switch.net "cd ~/app.jeromemarlier.com && bash server-check.sh"
+
+server-setup: ## Configurer le serveur après déploiement
+	@echo "$(BLUE)⚙️  Configuration du serveur...$(NC)"
+	@echo ""
+	@echo "$(YELLOW)1. Copie de la clé privée...$(NC)"
+	@scp config/private-key.pem duda6304@cocotier.o2switch.net:~/app.jeromemarlier.com/config/
+	@echo ""
+	@echo "$(YELLOW)2. Configuration serveur...$(NC)"
+	@ssh duda6304@cocotier.o2switch.net "cd ~/app.jeromemarlier.com && \
+		chmod 600 config/private-key.pem && \
+		mkdir -p var && chmod 755 var && \
+		echo 'Require all denied' > var/.htaccess && \
+		composer install --no-dev --optimize-autoloader 2>/dev/null || echo 'Composer install échoué' && \
+		echo '$(GREEN)✅ Configuration terminée$(NC)'"
+	@echo ""
+	@echo "$(YELLOW)⚠️  N'oubliez pas de créer et éditer .env sur le serveur!$(NC)"
+	@echo "$(BLUE)   ssh duda6304@cocotier.o2switch.net$(NC)"
+	@echo "$(BLUE)   cd ~/app.jeromemarlier.com && cp .env.example .env && nano .env$(NC)"
+
 # Alias
 run: dev ## Alias pour 'make dev'
 start: dev ## Alias pour 'make dev'
