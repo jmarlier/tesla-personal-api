@@ -7,7 +7,7 @@ use Firebase\JWT\Key;
 
 // === CONFIGURATION ===
 $client_id = 'c9c40292-ddb3-4a87-9cc0-5a0193081024';
-$privateKeyPath = 'private-key.pem'; // Clé EC privée au format PEM
+$privateKeyPath = '/config/private-key.pem'; // Clé EC privée au format PEM
 $fleetApiUrl = 'https://fleet-api.prd.na.vn.cloud.tesla.com';
 
 // === CHARGER LA CLÉ PRIVÉE ===
