@@ -9,13 +9,19 @@ tesla-app/
 ├── cli/                          # Scripts en ligne de commande
 │   ├── 01-get-fleet-token.php   # Étape 1 : Obtention du Fleet Auth Token
 │   └── 02-register-partner.php  # Étape 2 : Validation du Partner Account
+├── src/                          # Classes PHP
+│   └── TeslaFleetClient.php     # Client API Tesla Fleet
+├── api/                          # Endpoints API
+│   ├── vehicles.php             # Liste des véhicules
+│   ├── vehicle-data.php         # Données détaillées d'un véhicule
+│   └── send-command.php         # Envoyer des commandes
 ├── config/                       # Configuration
 │   └── private-key.pem          # Clé privée EC (secp256r1)
 ├── public/                       # Interface web
 │   ├── index.php                # Page d'accueil
 │   ├── login.php                # Initiation OAuth2
 │   ├── callback.php             # Callback OAuth2
-│   ├── dashboard.php            # Tableau de bord
+│   ├── dashboard.php            # Tableau de bord (avec AJAX)
 │   └── logout.php               # Déconnexion
 ├── var/                          # Données générées
 │   ├── fleet-auth-token.json    # Fleet Auth Token
@@ -24,7 +30,9 @@ tesla-app/
 ├── .env                          # Configuration (à ne pas commiter)
 ├── .env.example                 # Template de configuration
 ├── composer.json                 # Dépendances PHP
-└── README.md                     # Ce fichier
+├── README.md                     # Ce fichier
+├── DEPLOIEMENT.md               # Guide de déploiement
+└── ETAPE_4_API.md               # Documentation API complète
 ```
 
 ---
@@ -287,14 +295,17 @@ Tous les scripts affichent **la réponse complète de l'API Tesla** pour facilit
 
 ---
 
-## 📝 Prochaines étapes
+## ✅ Étapes complétées
 
 ### ÉTAPE 4 : Intégration de l'API Fleet Tesla
 
-- [ ] Créer `api/vehicles.php` - Lister les véhicules
-- [ ] Créer `api/vehicle-data.php` - Obtenir les données d'un véhicule
-- [ ] Créer `api/send-command.php` - Envoyer des commandes
-- [ ] Mettre à jour `dashboard.php` avec l'affichage des véhicules
+- ✅ Créé `src/TeslaFleetClient.php` - Classe helper pour l'API
+- ✅ Créé `api/vehicles.php` - Lister les véhicules
+- ✅ Créé `api/vehicle-data.php` - Obtenir les données d'un véhicule
+- ✅ Créé `api/send-command.php` - Envoyer des commandes
+- ✅ Mis à jour `dashboard.php` avec chargement dynamique AJAX
+
+**📚 Voir la documentation complète : [ETAPE_4_API.md](ETAPE_4_API.md)**
 
 ---
 
@@ -319,8 +330,10 @@ Tous les scripts affichent **la réponse complète de l'API Tesla** pour facilit
 
 - ✅ **Étape 1** - Fleet Auth Token : Fonctionnel
 - ✅ **Étape 2** - Partner Account Validation : Fonctionnel
-- ✅ **Étape 3** - OAuth2 User Flow : Fonctionnel (prêt à tester)
-- ⏳ **Étape 4** - Fleet API Calls : À venir
+- ✅ **Étape 3** - OAuth2 User Flow : Fonctionnel
+- ✅ **Étape 4** - Fleet API Calls : **TERMINÉ**
+
+**🎉 APPLICATION COMPLÈTE ET FONCTIONNELLE 🎉**
 
 ---
 

@@ -1,13 +1,38 @@
-# Sécurité - Empêcher l'accès direct aux fichiers sensibles
-<FilesMatch "\.(env|json|pem|key|log)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
+# Sécurité - Empêcher l'accès direct aux fichiers sensibles, sauf clé publique Tesla
+<IfModule mod_authz_core.c>
+	# Autoriser explicitement la clé publique Tesla (chemin: .well-known/.../com.tesla.3p.public-key.pem)
+	<Files "com.tesla.3p.public-key.pem">
+		Require all granted
+	</Files>
+
+	# Bloquer tous les autres fichiers sensibles
+	<FilesMatch "^(?!com\.tesla\.3p\.public-key\.pem$).*\.(env|json|pem|key|log)$">
+		Require all denied
+	</FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+	# Apache 2.2 compat
+	<Files "com.tesla.3p.public-key.pem">
+		Order allow,deny
+		Allow from all
+	</Files>
+
+	# Bloquer autres fichiers sensibles
+	<FilesMatch "\.(env|json|key|log)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+	<FilesMatch "^(?!com\.tesla\.3p\.public-key\.pem$).*\.pem$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+</IfModule>
 
 # Activer la réécriture d'URL (si nécessaire)
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+	RewriteEngine On
+	RewriteBase /
 </IfModule>
 
 # Désactiver l'affichage des erreurs en production (recommandé)
@@ -19,9 +44,9 @@ php_flag log_errors on
 
 # Protection contre les injections XSS
 <IfModule mod_headers.c>
-    Header set X-XSS-Protection "1; mode=block"
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
+	Header set X-XSS-Protection "1; mode=block"
+	Header set X-Content-Type-Options "nosniff"
+	Header set X-Frame-Options "SAMEORIGIN"
+	Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 

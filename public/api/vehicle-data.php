@@ -28,15 +28,36 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-require_once __DIR__ . '/../vendor/autoload.php';
+// Format de sortie (détecté en premier pour le header JSON)
+$format = $_GET['format'] ?? 'html';
+
+// Si format JSON demandé, envoyer le header dès le début
+if ($format === 'json') {
+    header('Content-Type: application/json');
+}
+
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use TeslaApp\TeslaFleetClient;
 
-$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
+// Englober dans un try/catch pour capturer toutes les erreurs
+try {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../..');
+    $dotenv->load();
 
-session_start();
+    session_start();
+} catch (Exception $e) {
+    if ($format === 'json') {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Configuration error',
+            'message' => $e->getMessage()
+        ]);
+        exit;
+    }
+    die('Erreur de configuration : ' . $e->getMessage());
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. VÉRIFICATION DE L'AUTHENTIFICATION
@@ -70,7 +91,6 @@ if (!$vehicleId) {
 
 $accessToken = $_SESSION['access_token'];
 $fleetApiUrl = $_ENV['TESLA_FLEET_API_URL'] ?? 'https://fleet-api.prd.na.vn.cloud.tesla.com';
-$format = $_GET['format'] ?? 'html';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3. REQUÊTE VERS L'API TESLA
@@ -87,7 +107,7 @@ $fullResponse = $client->getLastResponse();
 
 if ($format === 'json') {
     header('Content-Type: application/json');
-    
+
     if ($client->isSuccess() && $vehicleData !== null) {
         echo json_encode([
             'success' => true,
@@ -113,6 +133,7 @@ if ($format === 'json') {
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -250,6 +271,7 @@ if ($format === 'json') {
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -267,7 +289,7 @@ if ($format === 'json') {
         </div>
 
         <?php if ($client->isSuccess() && $vehicleData !== null): ?>
-            
+
             <div class="response-box success">
                 <h3>✅ Données du véhicule récupérées</h3>
                 <p><strong>Véhicule :</strong> <?= htmlspecialchars($vehicleData['display_name'] ?? $vehicleData['vin'] ?? 'N/A') ?></p>
@@ -276,7 +298,7 @@ if ($format === 'json') {
 
             <!-- Affichage des données principales -->
             <div class="data-grid">
-                
+
                 <!-- Informations générales -->
                 <div class="data-card">
                     <h3>🚗 Informations générales</h3>
@@ -296,82 +318,82 @@ if ($format === 'json') {
 
                 <!-- Charge -->
                 <?php if (isset($vehicleData['charge_state'])): $charge = $vehicleData['charge_state']; ?>
-                <div class="data-card">
-                    <h3>🔋 État de charge</h3>
-                    <div class="data-item">
-                        <strong>Niveau de batterie</strong>
-                        <div class="data-value"><?= htmlspecialchars($charge['battery_level'] ?? 'N/A') ?>%</div>
+                    <div class="data-card">
+                        <h3>🔋 État de charge</h3>
+                        <div class="data-item">
+                            <strong>Niveau de batterie</strong>
+                            <div class="data-value"><?= htmlspecialchars($charge['battery_level'] ?? 'N/A') ?>%</div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Autonomie</strong>
+                            <div class="data-value"><?= htmlspecialchars($charge['battery_range'] ?? 'N/A') ?> miles</div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Chargement en cours</strong>
+                            <div class="data-value"><?= isset($charge['charging_state']) && $charge['charging_state'] === 'Charging' ? 'Oui' : 'Non' ?></div>
+                        </div>
                     </div>
-                    <div class="data-item">
-                        <strong>Autonomie</strong>
-                        <div class="data-value"><?= htmlspecialchars($charge['battery_range'] ?? 'N/A') ?> miles</div>
-                    </div>
-                    <div class="data-item">
-                        <strong>Chargement en cours</strong>
-                        <div class="data-value"><?= isset($charge['charging_state']) && $charge['charging_state'] === 'Charging' ? 'Oui' : 'Non' ?></div>
-                    </div>
-                </div>
                 <?php endif; ?>
 
                 <!-- Climat -->
                 <?php if (isset($vehicleData['climate_state'])): $climate = $vehicleData['climate_state']; ?>
-                <div class="data-card">
-                    <h3>🌡️ Climat</h3>
-                    <div class="data-item">
-                        <strong>Température intérieure</strong>
-                        <div class="data-value"><?= htmlspecialchars($climate['inside_temp'] ?? 'N/A') ?>°C</div>
+                    <div class="data-card">
+                        <h3>🌡️ Climat</h3>
+                        <div class="data-item">
+                            <strong>Température intérieure</strong>
+                            <div class="data-value"><?= htmlspecialchars($climate['inside_temp'] ?? 'N/A') ?>°C</div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Température extérieure</strong>
+                            <div class="data-value"><?= htmlspecialchars($climate['outside_temp'] ?? 'N/A') ?>°C</div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Climatisation</strong>
+                            <div class="data-value"><?= isset($climate['is_climate_on']) && $climate['is_climate_on'] ? 'Activée' : 'Désactivée' ?></div>
+                        </div>
                     </div>
-                    <div class="data-item">
-                        <strong>Température extérieure</strong>
-                        <div class="data-value"><?= htmlspecialchars($climate['outside_temp'] ?? 'N/A') ?>°C</div>
-                    </div>
-                    <div class="data-item">
-                        <strong>Climatisation</strong>
-                        <div class="data-value"><?= isset($climate['is_climate_on']) && $climate['is_climate_on'] ? 'Activée' : 'Désactivée' ?></div>
-                    </div>
-                </div>
                 <?php endif; ?>
 
                 <!-- Localisation -->
                 <?php if (isset($vehicleData['drive_state'])): $drive = $vehicleData['drive_state']; ?>
-                <div class="data-card">
-                    <h3>📍 Localisation</h3>
-                    <div class="data-item">
-                        <strong>Latitude</strong>
-                        <div class="data-value"><?= htmlspecialchars($drive['latitude'] ?? 'N/A') ?></div>
+                    <div class="data-card">
+                        <h3>📍 Localisation</h3>
+                        <div class="data-item">
+                            <strong>Latitude</strong>
+                            <div class="data-value"><?= htmlspecialchars($drive['latitude'] ?? 'N/A') ?></div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Longitude</strong>
+                            <div class="data-value"><?= htmlspecialchars($drive['longitude'] ?? 'N/A') ?></div>
+                        </div>
+                        <?php if (isset($drive['latitude']) && isset($drive['longitude'])): ?>
+                            <div class="data-item">
+                                <a href="https://www.google.com/maps?q=<?= $drive['latitude'] ?>,<?= $drive['longitude'] ?>"
+                                    target="_blank" class="button" style="margin-top: 10px;">
+                                    🗺️ Voir sur Google Maps
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                    <div class="data-item">
-                        <strong>Longitude</strong>
-                        <div class="data-value"><?= htmlspecialchars($drive['longitude'] ?? 'N/A') ?></div>
-                    </div>
-                    <?php if (isset($drive['latitude']) && isset($drive['longitude'])): ?>
-                    <div class="data-item">
-                        <a href="https://www.google.com/maps?q=<?= $drive['latitude'] ?>,<?= $drive['longitude'] ?>" 
-                           target="_blank" class="button" style="margin-top: 10px;">
-                            🗺️ Voir sur Google Maps
-                        </a>
-                    </div>
-                    <?php endif; ?>
-                </div>
                 <?php endif; ?>
 
                 <!-- État du véhicule -->
                 <?php if (isset($vehicleData['vehicle_state'])): $state = $vehicleData['vehicle_state']; ?>
-                <div class="data-card">
-                    <h3>🔒 État du véhicule</h3>
-                    <div class="data-item">
-                        <strong>Verrouillé</strong>
-                        <div class="data-value"><?= isset($state['locked']) && $state['locked'] ? 'Oui' : 'Non' ?></div>
+                    <div class="data-card">
+                        <h3>🔒 État du véhicule</h3>
+                        <div class="data-item">
+                            <strong>Verrouillé</strong>
+                            <div class="data-value"><?= isset($state['locked']) && $state['locked'] ? 'Oui' : 'Non' ?></div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Kilométrage</strong>
+                            <div class="data-value"><?= htmlspecialchars($state['odometer'] ?? 'N/A') ?> miles</div>
+                        </div>
+                        <div class="data-item">
+                            <strong>Version firmware</strong>
+                            <div class="data-value"><?= htmlspecialchars($state['car_version'] ?? 'N/A') ?></div>
+                        </div>
                     </div>
-                    <div class="data-item">
-                        <strong>Kilométrage</strong>
-                        <div class="data-value"><?= htmlspecialchars($state['odometer'] ?? 'N/A') ?> miles</div>
-                    </div>
-                    <div class="data-item">
-                        <strong>Version firmware</strong>
-                        <div class="data-value"><?= htmlspecialchars($state['car_version'] ?? 'N/A') ?></div>
-                    </div>
-                </div>
                 <?php endif; ?>
 
             </div>
@@ -391,11 +413,11 @@ if ($format === 'json') {
             </div>
 
         <?php else: ?>
-            
+
             <div class="response-box error">
                 <h3>❌ Erreur lors de la récupération des données</h3>
                 <p><strong>Code HTTP :</strong> <?= $httpCode ?></p>
-                
+
                 <?php if (isset($fullResponse['error'])): ?>
                     <p><strong>Erreur :</strong> <?= htmlspecialchars($fullResponse['error']) ?></p>
                 <?php endif; ?>
@@ -413,5 +435,5 @@ if ($format === 'json') {
         <?php endif; ?>
     </div>
 </body>
-</html>
 
+</html>

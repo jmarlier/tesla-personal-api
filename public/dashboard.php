@@ -217,27 +217,27 @@ $hasRefreshToken = isset($_SESSION['refresh_token']);
 
         <div class="info-box">
             <h3>🔧 Actions disponibles</h3>
-            <a href="../api/vehicles.php" class="button">📋 Liste complète des véhicules</a>
+            <a href="/api/vehicles.php" class="button">📋 Liste complète des véhicules</a>
             <p style="color: #999; font-size: 12px; margin-top: 10px;">
                 Affichage avec toutes les informations détaillées et réponses API
             </p>
         </div>
 
         <script>
-        // Chargement des véhicules via l'API
-        fetch('../api/vehicles.php?format=json')
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('vehicles-container');
-                
-                if (data.success && data.vehicles && data.vehicles.length > 0) {
-                    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
-                    
-                    data.vehicles.forEach(vehicle => {
-                        const stateClass = vehicle.state === 'online' ? 'valid' : 'expired';
-                        const stateEmoji = vehicle.state === 'online' ? '✅' : '😴';
-                        
-                        html += `
+            // Chargement des véhicules via l'API
+            fetch('/api/vehicles.php?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('vehicles-container');
+
+                    if (data.success && data.vehicles && data.vehicles.length > 0) {
+                        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+
+                        data.vehicles.forEach(vehicle => {
+                            const stateClass = vehicle.state === 'online' ? 'valid' : 'expired';
+                            const stateEmoji = vehicle.state === 'online' ? '✅' : '😴';
+
+                            html += `
                             <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 10px; padding: 20px;">
                                 <h4 style="color: #333; margin-bottom: 10px;">
                                     🚗 ${vehicle.display_name || vehicle.vin}
@@ -250,35 +250,35 @@ $hasRefreshToken = isset($_SESSION['refresh_token']);
                                     <strong>VIN :</strong> ${vehicle.vin}
                                 </p>
                                 <div style="margin-top: 15px;">
-                                    <a href="../api/vehicle-data.php?id=${vehicle.id}" class="button" style="font-size: 12px; padding: 8px 16px;">
+                                    <a href="/api/vehicle-data.php?id=${vehicle.id}" class="button" style="font-size: 12px; padding: 8px 16px;">
                                         📊 Voir détails
                                     </a>
                                 </div>
                             </div>
                         `;
-                    });
-                    
-                    html += '</div>';
-                    html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Total : ${data.count} véhicule(s)</p>`;
-                    container.innerHTML = html;
-                } else if (data.success && data.vehicles && data.vehicles.length === 0) {
-                    container.innerHTML = '<p style="color: #666;">Aucun véhicule trouvé sur votre compte Tesla.</p>';
-                } else {
-                    container.innerHTML = `
+                        });
+
+                        html += '</div>';
+                        html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Total : ${data.count} véhicule(s)</p>`;
+                        container.innerHTML = html;
+                    } else if (data.success && data.vehicles && data.vehicles.length === 0) {
+                        container.innerHTML = '<p style="color: #666;">Aucun véhicule trouvé sur votre compte Tesla.</p>';
+                    } else {
+                        container.innerHTML = `
                         <div style="color: #dc3545;">
                             <p><strong>❌ Erreur lors du chargement des véhicules</strong></p>
                             <p style="margin-top: 10px; font-size: 14px;">
                                 ${data.error || 'Erreur inconnue'}
                             </p>
-                            <a href="../api/vehicles.php" class="button" style="margin-top: 15px; background: #dc3545;">
+                            <a href="/api/vehicles.php" class="button" style="margin-top: 15px; background: #dc3545;">
                                 Voir les détails de l'erreur
                             </a>
                         </div>
                     `;
-                }
-            })
-            .catch(error => {
-                document.getElementById('vehicles-container').innerHTML = `
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('vehicles-container').innerHTML = `
                     <div style="color: #dc3545;">
                         <p><strong>❌ Erreur de connexion</strong></p>
                         <p style="margin-top: 10px; font-size: 14px;">
@@ -286,7 +286,7 @@ $hasRefreshToken = isset($_SESSION['refresh_token']);
                         </p>
                     </div>
                 `;
-            });
+                });
         </script>
     </div>
 </body>
