@@ -1,88 +1,23 @@
-# Environnement et secrets
-.env
-*.pem
-*.key
-
 # Dépendances
 /vendor/
 
-# Fichiers système
-.DS_Store
-*.log
-error_log
+# Fichiers de configuration sensibles
+.env
 
-# Configuration sensible
-/config/private-key.pem
-/config/*.pem
-/config/*.key
-
-# Tokens et données utilisateur
+# Tokens et données sensibles
 /var/
-tokens.json
-partner.json
-user_tokens.json
-debug.json
+*.pem
+*.key
 
-# Dossier public vide (structure legacy)
-/public/
+# Logs
+*.log
 
-# Well-known (généré sur le serveur)
-/.well-known/appspecific/*.pem
+# macOS
+.DS_Store
 
-# ================================
-# Documentation de développement
-# (Inutile en production)
-# ================================
-
-# Rapports de nettoyage et développement
-CLEANUP_REPORT.md
-CLEANUP_SUMMARY.md
-FINAL_CLEANUP.md
-FILES_CREATED.md
-PROJECT_FILES_INVENTORY.md
-
-# Documentation dashboard (déjà accessible via GitHub)
-DASHBOARD_INDEX.md
-DASHBOARD_PREVIEW.md
-DASHBOARD_SUMMARY.md
-GETTING_STARTED.md
-START_HERE.md
-DEPLOY_README.md
-
-# Documentation API exemples (dev seulement)
-API_EXAMPLES.md
-
-# Documentation OAuth (référence dev)
-OAUTH_FLOWS.md
-OAUTH_SETUP.md
-OAUTH_SUMMARY.md
-
-# ================================
-# Scripts et outils de développement
-# (Inutile en production)
-# ================================
-
-# Scripts de lancement local
-run-dashboard.sh
-run-dashboard.bat
-
-# Tests locaux
-test-dashboard.php
-
-# Utilitaires CLI (dev seulement)
-cli-get-token.php
-
-# Makefile (dev seulement)
-Makefile
-
-# ================================
-# Fichiers de référence
-# (Optionnel - peuvent être exclus)
-# ================================
-
-# Documentation complète (accessible via README.md principal)
-# Décommenter si vous ne voulez pas ces docs en prod:
-# README_DASHBOARD.md
-# QUICK_START_DASHBOARD.md
-# SETUP_DASHBOARD.md
-# SECURITY.md
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

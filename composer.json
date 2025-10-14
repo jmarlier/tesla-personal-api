@@ -1,12 +1,18 @@
 {
+    "name": "jeromemarlier/tesla-fleet-app",
+    "description": "Application Tesla Fleet API - Authentification et gestion des véhicules",
+    "type": "project",
     "require": {
-        "vlucas/phpdotenv": "^5.6",
-        "firebase/php-jwt": "^6.11",
-        "symfony/dotenv": "^7.3"
+        "php": ">=8.0",
+        "vlucas/phpdotenv": "^5.5"
     },
     "autoload": {
         "psr-4": {
             "TeslaApp\\": "src/"
         }
+    },
+    "config": {
+        "optimize-autoloader": true
     }
 }
+

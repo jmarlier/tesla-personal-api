@@ -1,32 +1,27 @@
+# Sécurité - Empêcher l'accès direct aux fichiers sensibles
+<FilesMatch "\.(env|json|pem|key|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Activer la réécriture d'URL (si nécessaire)
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
-    
-    # Rediriger vers index.php si le fichier n'existe pas
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
-# Bloquer l'accès aux fichiers sensibles
-<FilesMatch "\.(env|pem|key)$">
-    Require all denied
-</FilesMatch>
+# Désactiver l'affichage des erreurs en production (recommandé)
+# php_flag display_errors off
+# php_flag display_startup_errors off
 
-# Protection contre l'accès direct aux fichiers PHP de configuration
-<FilesMatch "^(composer\.json|composer\.lock)$">
-    Require all denied
-</FilesMatch>
+# Activer les logs d'erreurs
+php_flag log_errors on
 
-# Sécurité additionnelle
+# Protection contre les injections XSS
 <IfModule mod_headers.c>
-    # Protection XSS
     Header set X-XSS-Protection "1; mode=block"
-    
-    # Empêcher le MIME sniffing
     Header set X-Content-Type-Options "nosniff"
-    
-    # Clickjacking protection
     Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 

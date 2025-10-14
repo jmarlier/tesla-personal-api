@@ -1,32 +1,32 @@
-# Index par défaut
+# Protection des dossiers sensibles
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
 
-DirectoryIndex index.php
+# Bloquer l'accès au dossier var/
+RedirectMatch 403 ^/var/.*$
 
-# Bloquer l'accès aux dossiers de configuration (sauf .well-known)
+# Bloquer l'accès au dossier config/
+RedirectMatch 403 ^/config/.*$
 
-RedirectMatch 404 ^/(config|src|vendor|var)/
+# Bloquer l'accès au dossier vendor/ (sauf si nécessaire)
+RedirectMatch 403 ^/vendor/.*$
 
-# Protection des fichiers sensibles
-
-# IMPORTANT: Autoriser .well-known/ pour Tesla (ordre important!)
-
-<FilesMatch "^\.well-known/">
-Order allow,deny
-Allow from all
+# Bloquer l'accès aux fichiers .env
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
 </FilesMatch>
 
-# Bloquer les autres .env, .pem, .key (sauf dans .well-known)
-
-<FilesMatch "\.(env)$">
-Order deny,allow
-Deny from all
+# Bloquer l'accès aux fichiers de configuration
+<FilesMatch "\.(json|pem|key|log)$">
+    Order allow,deny
+    Deny from all
 </FilesMatch>
 
-# Bloquer .pem et .key SAUF dans .well-known
+# Autoriser l'accès au dossier .well-known (nécessaire pour Tesla)
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_URI} ^/\.well-known/
+    RewriteRule .* - [L]
+</IfModule>
 
-SetEnvIf Request_URI "^/\.well-known/" allow_pem
-<FilesMatch "\.(pem|key)$">
-Order deny,allow
-Deny from all
-Allow from env=allow_pem
-</FilesMatch>
