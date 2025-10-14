@@ -205,30 +205,89 @@ $hasRefreshToken = isset($_SESSION['refresh_token']);
             </div>
         </div>
 
-        <div class="info-box coming-soon">
-            <h2>🚧 Fonctionnalités à venir</h2>
-            <p style="margin-top: 10px;">
-                <strong>Étape 4 : Intégration de l'API Fleet Tesla</strong>
-            </p>
-            <p style="margin-top: 20px; color: #666;">
-                Cette section affichera bientôt :<br>
-                • Liste de vos véhicules Tesla<br>
-                • État de charge et autonomie<br>
-                • Localisation GPS<br>
-                • Envoi de commandes (honk, flash, etc.)
-            </p>
+        <!-- Chargement des véhicules via AJAX -->
+        <div class="info-box">
+            <h3>🚗 Mes véhicules Tesla</h3>
+            <div id="vehicles-container">
+                <p style="text-align: center; color: #666;">
+                    Chargement des véhicules...
+                </p>
+            </div>
         </div>
 
         <div class="info-box">
             <h3>🔧 Actions disponibles</h3>
-            <p style="color: #666; margin-bottom: 15px;">
-                Pour le moment, vous pouvez tester votre authentification :
-            </p>
-            <a href="test-api.php" class="button">🧪 Tester l'API Tesla</a>
+            <a href="../api/vehicles.php" class="button">📋 Liste complète des véhicules</a>
             <p style="color: #999; font-size: 12px; margin-top: 10px;">
-                (À créer à l'étape 4)
+                Affichage avec toutes les informations détaillées et réponses API
             </p>
         </div>
+
+        <script>
+        // Chargement des véhicules via l'API
+        fetch('../api/vehicles.php?format=json')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('vehicles-container');
+                
+                if (data.success && data.vehicles && data.vehicles.length > 0) {
+                    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+                    
+                    data.vehicles.forEach(vehicle => {
+                        const stateClass = vehicle.state === 'online' ? 'valid' : 'expired';
+                        const stateEmoji = vehicle.state === 'online' ? '✅' : '😴';
+                        
+                        html += `
+                            <div style="background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 10px; padding: 20px;">
+                                <h4 style="color: #333; margin-bottom: 10px;">
+                                    🚗 ${vehicle.display_name || vehicle.vin}
+                                </h4>
+                                <p style="margin: 8px 0; font-size: 14px;">
+                                    <strong>État :</strong> 
+                                    <span class="status ${stateClass}">${stateEmoji} ${vehicle.state}</span>
+                                </p>
+                                <p style="margin: 8px 0; font-size: 14px; color: #666;">
+                                    <strong>VIN :</strong> ${vehicle.vin}
+                                </p>
+                                <div style="margin-top: 15px;">
+                                    <a href="../api/vehicle-data.php?id=${vehicle.id}" class="button" style="font-size: 12px; padding: 8px 16px;">
+                                        📊 Voir détails
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    html += `<p style="margin-top: 15px; color: #666; font-size: 14px;">Total : ${data.count} véhicule(s)</p>`;
+                    container.innerHTML = html;
+                } else if (data.success && data.vehicles && data.vehicles.length === 0) {
+                    container.innerHTML = '<p style="color: #666;">Aucun véhicule trouvé sur votre compte Tesla.</p>';
+                } else {
+                    container.innerHTML = `
+                        <div style="color: #dc3545;">
+                            <p><strong>❌ Erreur lors du chargement des véhicules</strong></p>
+                            <p style="margin-top: 10px; font-size: 14px;">
+                                ${data.error || 'Erreur inconnue'}
+                            </p>
+                            <a href="../api/vehicles.php" class="button" style="margin-top: 15px; background: #dc3545;">
+                                Voir les détails de l'erreur
+                            </a>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('vehicles-container').innerHTML = `
+                    <div style="color: #dc3545;">
+                        <p><strong>❌ Erreur de connexion</strong></p>
+                        <p style="margin-top: 10px; font-size: 14px;">
+                            Impossible de charger les véhicules : ${error.message}
+                        </p>
+                    </div>
+                `;
+            });
+        </script>
     </div>
 </body>
 
